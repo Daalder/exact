@@ -1,0 +1,17 @@
+{
+    "require": {
+        "picqer/exact-php-client": "^3.31"
+    },
+    "autoload": {
+        "psr-4": {
+            "Daalder\\Exact": "src/",
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Daalder\\Exact\\ExactServiceProvider"
+            ]
+        }
+    }
+}
