@@ -1,9 +1,7 @@
 {
     "name": "daalder/exact",
     "description": "Exact integration for Daalder",
-    "require": {
-        "picqer/exact-php-client": "^3.31"
-    },
+	"license": "MIT",
     "authors": [
         {
             "name": "Egbert Wietses",
@@ -13,11 +11,27 @@
             "name": "Vincent van Hoven"
         }
     ],
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://repo.packagist.com/pionect/"
+        }
+    ],
+    "require": {
+        "picqer/exact-php-client": "^3.31"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^5.0|^6.0",
+        "phpunit/phpunit": "^9.3",
+        "pionect/daalder": "^10"
+    },
     "autoload": {
         "psr-4": {
-            "Daalder\\Exact": "src/"
+            "Daalder\\Exact\\": "src/"
         }
     },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "extra": {
         "laravel": {
             "providers": [
