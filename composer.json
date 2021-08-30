@@ -1,7 +1,18 @@
 {
+    "name": "daalder/exact",
+    "description": "Exact integration for Daalder",
     "require": {
         "picqer/exact-php-client": "^3.31"
     },
+    "authors": [
+        {
+            "name": "Egbert Wietses",
+            "email": "info@pionect.nl"
+        },
+        {
+            "name": "Vincent van Hoven"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Daalder\\Exact": "src/"
