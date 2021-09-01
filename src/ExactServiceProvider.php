@@ -2,10 +2,14 @@
 
 namespace Daalder\Exact;
 
+use Daalder\Exact\Commands\PullCustomerReferences;
+use Daalder\Exact\Commands\PullProductReferences;
 use Daalder\Exact\ServiceProviders\EventServiceProvider;
+use Daalder\Exact\ServiceProviders\WebhookServiceProvider;
 use Illuminate\Support\ServiceProvider;
 use Daalder\Exact\ServiceProviders\ConnectionServiceProvider;
 use Daalder\Exact\ServiceProviders\ObservationServiceProvider;
+use Illuminate\Support\Str;
 use Picqer\Financials\Exact\Connection;
 use Picqer\Financials\Exact\StockCount;
 use Picqer\Financials\Exact\WebhookSubscription;
@@ -37,24 +41,11 @@ class ExactServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__.'/../routes/exact.php');
 
         if ($this->app->runningInConsole()) {
-//            $this->commands([
-//                PullExactVatRates::class,
-//            ]);
+            $this->commands([
+                PullProductReferences::class,
+                PullCustomerReferences::class,
+            ]);
         }
-
-//        try {
-//            /** @var Connection $client */
-//            $connection = app(\Picqer\Financials\Exact\Connection::class);
-//            $webhook = new WebhookSubscription($connection);
-//            $webhook->Topic = 'StockPositions';
-//            $webhook->CallbackURL = config('app.url').'/exact/webhook-stockposition';
-//            $webhook->save();
-
-//            $stock = new StockCount();
-//            $stock->filter('', '', 'Description, StockCountLines')[0]->StockCountLines[0]->QuantityInStock;
-//        } catch (\Exception $e) {
-//            echo "bad";
-//        }
     }
 
     /**
@@ -71,5 +62,6 @@ class ExactServiceProvider extends ServiceProvider
         $this->app->register(ConnectionServiceProvider::class);
         $this->app->register(ObservationServiceProvider::class);
         $this->app->register(EventServiceProvider::class);
+        $this->app->register(WebhookServiceProvider::class);
     }
 }

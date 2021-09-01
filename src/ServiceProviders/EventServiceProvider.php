@@ -3,8 +3,8 @@
 namespace Daalder\Exact\ServiceProviders;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Daalder\Exact\Listeners\OrderCreatedListener;
-use Pionect\Daalder\Events\Order\OrderCreated;
+use Daalder\Exact\Listeners\PaymentConfirmedListener;
+use Pionect\Daalder\Events\Payment\PaymentConfirmed;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -14,8 +14,8 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-        OrderCreated::class => [
-            OrderCreatedListener::class,
+        PaymentConfirmed::class => [
+            PaymentConfirmedListener::class,
         ]
     ];
 }

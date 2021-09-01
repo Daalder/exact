@@ -6,5 +6,9 @@ use Daalder\Exact\Http\Controllers\WebhookController;
 
 Route::group(['prefix' => 'exact'], function () {
     Route::get('auth-callback', AuthController::class.'@callback');
-    Route::post('webhook-stockposition', WebhookController::class.'@stockPosition');
+
+    Route::group(['prefix' => 'webhook'], function() {
+        Route::post('stockposition', WebhookController::class.'@stockPosition');
+        Route::post('item', WebhookController::class.'@item');
+    });
 });
