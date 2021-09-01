@@ -26,6 +26,7 @@
         "pionect/daalder": "^10"
     },
     "autoload": {
+        "classmap": ['database'],
         "psr-4": {
             "Daalder\\Exact\\": "src/"
         }
