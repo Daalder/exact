@@ -9,6 +9,6 @@ Route::group(['prefix' => 'exact'], function () {
 
     Route::group(['prefix' => 'webhook'], function() {
         Route::post('stockposition', WebhookController::class.'@stockPosition');
-        Route::post('item', WebhookController::class.'@item');
+//        Route::post('item', WebhookController::class.'@item');
     });
 });
