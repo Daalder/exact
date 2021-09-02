@@ -3,16 +3,12 @@
 namespace Daalder\Exact;
 
 use Daalder\Exact\Commands\PullCustomerReferences;
-use Daalder\Exact\Commands\PullProductReferences;
+use Daalder\Exact\Commands\PushProductToExact;
 use Daalder\Exact\ServiceProviders\EventServiceProvider;
 use Daalder\Exact\ServiceProviders\WebhookServiceProvider;
 use Illuminate\Support\ServiceProvider;
 use Daalder\Exact\ServiceProviders\ConnectionServiceProvider;
 use Daalder\Exact\ServiceProviders\ObservationServiceProvider;
-use Illuminate\Support\Str;
-use Picqer\Financials\Exact\Connection;
-use Picqer\Financials\Exact\StockCount;
-use Picqer\Financials\Exact\WebhookSubscription;
 
 class ExactServiceProvider extends ServiceProvider
 {
@@ -42,8 +38,8 @@ class ExactServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                PullProductReferences::class,
                 PullCustomerReferences::class,
+                PushProductToExact::class,
             ]);
         }
     }
