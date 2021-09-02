@@ -10,7 +10,7 @@ use Picqer\Financials\Exact\SalesOrder;
 use Pionect\Daalder\Models\Order\Order;
 use Pionect\Daalder\Models\Order\Orderrow;
 use Pionect\Daalder\Models\Order\Repositories\OrderRowRepository;
-use Daalder\Exact\Repositories\VatRateRepository;
+use Pionect\Daalder\Models\VatRate\Repositories\VatRateRepository;
 use Pionect\Daalder\Models\VatRate\VatRate;
 use Pionect\Daalder\Services\Product\ProductPriceFetcher;
 
@@ -109,7 +109,7 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
                     'UnitCode' => 'pc',
                     'UnitPrice' => $orderrow->getPrice() / (1 + ($vatRate->percentage / 100)),
                     'Quantity' => $orderrow->amount,
-                    'VATCode' => $this->vatRateRepository->getExactCodeFromVatRate($vatRate),
+                    'VATCode' => $vatRate->exact_code,
                     'Description' => $this->getOrderRowDescription($orderrow)
                 ];
             } else {

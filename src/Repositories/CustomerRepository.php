@@ -32,27 +32,12 @@ class CustomerRepository extends \Pionect\Daalder\Models\Customer\Repositories\C
      */
     public function updateOrCreateExactCustomerFromOrder(Connection $connection, Order $order) : Account
     {
-        $exactId = $this->getExactIdFromCustomer($order->customer);
-
-        // If no exact ID found
-        if(!$exactId){
-            // Try matching based on customer email
-            $item = new Account($connection);
-            /* @var Account $match */
-            $match = $item->filter("Email eq '".$order->email."'",'','ID');
-
-            // If match was found
-            if(isset($match[0])) {
-                // Get ID from match
-                $exactId = $match[0]->ID;
-                // Save reference
-                $this->setExactIdIfNotExists($order->customer, $exactId);
-            }
-        }
-
         $account = new Account($connection);
 
+        // If customer is already matched to an Exact Account
+        $exactId = $this->getExactIdFromCustomer($order->customer);
         if ($exactId) {
+            // Update the existing Exact Account
             $account->ID = $exactId;
         }
 
@@ -64,18 +49,8 @@ class CustomerRepository extends \Pionect\Daalder\Models\Customer\Repositories\C
         $account->AddressLine1 = $order->invoice_address . ' ' . $order->invoice_housenumber;
         $account->City = $order->invoice_city;
         $account->Postcode = $order->invoice_postalcode;
-//        $account->AddressLine2 = $order->email;
-//        $account->AddressLine3 = $order->mobile ?? $order->phone;
         $account->Country = $order->country_code;
 //        $account->SalesVATCode = $this->getVATCode($order);
-
-//        try {
-//            if (VatCalculator::isValidVATNumber($order->vatnumber)) {
-//                $account->VATNumber = $order->vatnumber;
-//            }
-//        } catch (VATCheckUnavailableException $e) {
-//            // vat api unavailable
-//        }
 
         $account->save();
 
