@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Daalder\Exact\Repositories\ProductRepository;
 use Illuminate\Http\Request;
 use Picqer\Financials\Exact\Connection;
-use Picqer\Financials\Exact\Item;
 use Picqer\Financials\Exact\StockPosition;
 use Picqer\Financials\Exact\Webhook\Authenticatable;
 
@@ -57,22 +56,6 @@ class WebhookController extends Controller
                 'planned_out' => $stockPosition->PlanningOut ?? 0
             ]);
         }
-
-        return response('', 200);
-    }
-
-    public function item(Request $request) {
-        // If not authenticated
-        if($this->isAuthenticated() !== true) {
-            // Exact calls this endpoint without a payload when first registering the webhook.
-            // This call cannot be authenticated. Therefore, simply return an empty
-            // 200 response so Exact finishes registering the webhook.
-            return response('', 200);
-        }
-
-        $itemKey = $request->all()['Content']['Key'];
-
-        $this->productRepository->updateProductFromExactItemId($itemKey);
 
         return response('', 200);
     }

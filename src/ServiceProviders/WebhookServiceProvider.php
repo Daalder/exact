@@ -10,27 +10,22 @@ use Picqer\Financials\Exact\WebhookSubscription;
 class WebhookServiceProvider extends ServiceProvider
 {
     public function register() {
-        // Don't try to register webhooks on calls to a webhook
-        if(Str::contains(request()->url(), 'exact/webhook/') === false) {
+        // Don't try to register webhooks on calls to a webhook or to the authorization callback
+        if(
+            Str::contains(request()->url(), 'exact/webhook/') === false &&
+            Str::contains(request()->url(), 'exact/auth-callback') === false
+        ) {
             try {
                 /** @var Connection $client */
                 $connection = app(\Picqer\Financials\Exact\Connection::class);
                 $webhook = new WebhookSubscription($connection);
 
                 $stockSubscription = collect($webhook->get())->firstWhere('Topic', 'StockPositions');
-                $itemSubscription = collect($webhook->get())->firstWhere('Topic', 'Items');
 
                 if(is_null($stockSubscription)) {
                     $webhook = new WebhookSubscription($connection);
                     $webhook->Topic = 'StockPositions';
                     $webhook->CallbackURL = config('app.url').'/exact/webhook/stockposition';
-                    $webhook->save();
-                }
-
-                if(is_null($itemSubscription)) {
-                    $webhook = new WebhookSubscription($connection);
-                    $webhook->Topic = 'Items';
-                    $webhook->CallbackURL = config('app.url').'/exact/webhook/item';
                     $webhook->save();
                 }
             } catch (\Exception $e) {
