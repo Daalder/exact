@@ -2,9 +2,11 @@
 
 namespace Daalder\Exact\ServiceProviders;
 
+use Daalder\Exact\Observers\ProductObserver;
+use Daalder\Exact\Observers\StockObserver;
 use Illuminate\Support\ServiceProvider;
-use Daalder\Exact\Observers\OrderObserver;
-use Pionect\Daalder\Models\Order\Order;
+use Pionect\Daalder\Models\Product\Product;
+use Pionect\Daalder\Models\Product\Stock;
 
 class ObservationServiceProvider extends ServiceProvider
 {
@@ -14,6 +16,7 @@ class ObservationServiceProvider extends ServiceProvider
      * @return void
      */
     public function boot() {
-        Order::observe(OrderObserver::class);
+        Stock::observe(StockObserver::class);
+        Product::observe(ProductObserver::class);
     }
 }

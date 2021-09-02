@@ -21,6 +21,11 @@ class PushOrderToExact implements ShouldQueue
      */
     protected $order;
 
+    /**
+     * @var Connection $connection
+     */
+    protected $connection;
+
     public function __construct(Order $order)
     {
         $this->order = $order;
@@ -33,7 +38,6 @@ class PushOrderToExact implements ShouldQueue
     ) {
         // If order hasn't been pushed yet
         if (
-//            $this->order->transaction_status == 'OK' &&
             is_null($orderRepository->getExactIdFromOrder($this->order))
         ) {
             // Create Exact Account (customer)
@@ -42,45 +46,17 @@ class PushOrderToExact implements ShouldQueue
             $deliveryAddress = $orderRepository->createExactDeliveryAddressFromOrder($this->connection, $this->order, $account);
 
             // If no invoice address is available
-            if (!$this->order->invoice_address) {
-                // Use delivery address as invoice address
-                $invoiceAddress = $orderRepository->createExactDeliveryAddressFromOrder($this->connection, $this->order, $account);
-            } else {
-                $invoiceAddress = $orderRepository->createExactInvoiceAddressFromOrder($this->connection, $this->order, $account);
-            }
+//            if (!$this->order->invoice_address) {
+//                // Use delivery address as invoice address
+//                $invoiceAddress = $orderRepository->createExactDeliveryAddressFromOrder($this->connection, $this->order, $account);
+//            } else {
+//                $invoiceAddress = $orderRepository->createExactInvoiceAddressFromOrder($this->connection, $this->order, $account);
+//            }
 
             // Make order
-            $exactOrder = $orderRepository->createExactOrder($this->connection, $this->order, $account, $deliveryAddress, $invoiceAddress);
+            $exactOrder = $orderRepository->createExactOrder($this->connection, $this->order, $account, $deliveryAddress);
 
 //            $this->pushDiscount($exactOrder);
         }
     }
-
-    /**
-     * @param $exactOrder
-     */
-//    protected function pushDiscount($exactOrder)
-//    {
-//        $xml = $exactOrder->fetchXml([
-//            'Params_OrderNumber_From' => $exactOrder->OrderNumber,
-//            'Params_OrderNumber_To'   => $exactOrder->OrderNumber
-//        ]);
-//
-//        $xpath = new \DOMXPath($xml);
-//
-//        if ($xpath->evaluate('//EntryDiscount')->length) {
-//            $entryDiscount            = array_first($xpath->evaluate('//EntryDiscount'));
-//            $entryDiscount->nodeValue = '';
-//
-//            if ($this->order->discount_type == 'percentage') {
-//                $nodeName = 'Percentage';
-//            } else {
-//                $nodeName = 'AmountInclVAT';
-//            }
-//
-//            $entryDiscount->appendChild($xml->createElement($nodeName, $this->order->discount));
-//
-//            $exactOrder->storeXml($xml);
-//        }
-//    }
 }
