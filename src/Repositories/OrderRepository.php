@@ -97,22 +97,15 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
                 $vatRate = $this->vatRateRepository->fetchPreferred();
             }
 
-            // If Daalder product was successfully matched to an Exact Item
-            if ($productExactID) {
-                // Create an Exact SalesOrderLine for this Daalder Orderrow
-                $salesOrderLines[] = [
-                    'Item' => $productExactID,
-                    'UnitCode' => 'pc',
-                    'UnitPrice' => $orderrow->getPrice() / (1 + ($vatRate->percentage / 100)),
-                    'Quantity' => $orderrow->amount,
-                    'VATCode' => $vatRate->exact_code,
-                    'Description' => $this->getOrderRowDescription($orderrow)
-                ];
-            } else {
-                // Else, add a note on the Exact SalesOrder that one or more lines are missing
-                // TODO: add support for translations here
-                $salesOrder->Description = 'WARNING: one or more orderrows are missing';
-            }
+            // Create an Exact SalesOrderLine for this Daalder Orderrow
+            $salesOrderLines[] = [
+                'Item' => $productExactID,
+                'UnitCode' => 'pc',
+                'UnitPrice' => $orderrow->getPrice() / (1 + ($vatRate->percentage / 100)),
+                'Quantity' => $orderrow->amount,
+                'VATCode' => $vatRate->exact_code,
+                'Description' => $this->getOrderRowDescription($orderrow)
+            ];
         }
 
         // Save SalesOrderLines to Exact SalesOrder
