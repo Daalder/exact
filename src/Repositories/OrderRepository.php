@@ -2,6 +2,7 @@
 
 namespace Daalder\Exact\Repositories;
 
+use Daalder\Exact\Jobs\PushProductToExact;
 use Picqer\Financials\Exact\Account;
 use Picqer\Financials\Exact\Address;
 use Picqer\Financials\Exact\Connection;
@@ -79,7 +80,15 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
             $item = new Item($connection);
             $productExactID = $item->findId(trim($orderrow->sku));
 
-            // TODO: if product not found (but $orderrow->sku is not null), create it in Exact
+            // Product with sku not found in Exact
+            if(!$productExactID) {
+                // Create the product in Exact
+                PushProductToExact::dispatchNow($orderrow->product);
+
+                // Fetch the newly created product from Exact
+                $item = new Item($connection);
+                $productExactID = $item->findId(trim($orderrow->sku));
+            }
 
             // Get the Daalder VAT rate based on the orderrow VAT percentage
             $vatRate = VatRate::firstWhere('percentage', $orderrow->vat_rate);
