@@ -14,6 +14,10 @@ class ProductRepository extends \Pionect\Daalder\Models\Product\Repositories\Pro
      */
     public function getProductFromExactId(string $exactId) {
         $connection = app(Connection::class);
+        if($connection->needsAuthentication()) {
+            throw new \Exception("Connection to Exact is not authenticated! Call the 'authenticate-exact' endpoint to fix this.");
+        }
+
         $item = new Item($connection);
         $item = $item->filter("ID eq guid'$exactId'");
 

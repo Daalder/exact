@@ -30,5 +30,8 @@ php artisan migrate
 
 ####Configure the VAT rates
 
-A new column has been added to the Daalder `vat_rates` table (`exact_code`) that needs to be filled for each VAT rate. The package uses this field to match Daalder and Exact VAT rates. Please refer to the Exact documentation for fetching these VAT codes. 
+A new column has been added to the Daalder `vat_rates` table (`exact_code`) that needs to be filled for each VAT rate. The package uses this field to match Daalder and Exact VAT rates. Please refer to the Exact documentation for fetching these VAT codes.
 
+####Authenticate with Exact
+
+Perform a `GET` call to `/authenticate-exact`. Open the returned url in your browser and authenticate with Exact.

@@ -42,6 +42,10 @@ class WebhookController extends Controller
 
         /** @var Connection $connection */
         $connection = app(Connection::class);
+        if($connection->needsAuthentication()) {
+            throw new \Exception("Connection to Exact is not authenticated! Call the 'authenticate-exact' endpoint to fix this.");
+        }
+
         $stockPosition = new StockPosition($connection);
         $stockPosition = $stockPosition->filter([], '', '', ['itemId' => "guid'{$stockPositionID}'"]);
 

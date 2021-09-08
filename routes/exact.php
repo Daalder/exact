@@ -11,3 +11,7 @@ Route::group(['prefix' => 'exact'], function () {
         Route::post('stockposition', WebhookController::class.'@stockPosition');
     });
 });
+
+Route::group(['middleware' => ['api_client']], function () {
+    Route::get('authenticate-exact', AuthController::class.'@authenticateExact');
+});

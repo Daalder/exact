@@ -2,7 +2,6 @@
 
 namespace Daalder\Exact;
 
-use Daalder\Exact\Commands\PullCustomerReferences;
 use Daalder\Exact\Commands\PushProductToExact;
 use Daalder\Exact\ServiceProviders\EventServiceProvider;
 use Daalder\Exact\ServiceProviders\WebhookServiceProvider;
@@ -38,7 +37,6 @@ class ExactServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                PullCustomerReferences::class,
                 PushProductToExact::class,
             ]);
         }

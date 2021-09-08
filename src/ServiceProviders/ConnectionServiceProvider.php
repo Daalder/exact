@@ -22,7 +22,13 @@ class ConnectionServiceProvider extends ServiceProvider
             $connection->setExactClientSecret(config('daalder-exact.client_secret'));
             $connection->setBaseUrl(config('daalder-exact.base_url'));
 
-            $file = file_get_contents(__DIR__.'/../../storage/oauth.json');
+            $file = '';
+            try {
+                $file = file_get_contents(storage_path('exact/oauth.json'));
+            } catch (\Exception $e) {
+                //
+            }
+
             $file = trim(preg_replace('/\s\s+/', ' ', $file));
             $file = json_decode($file);
 
@@ -46,11 +52,15 @@ class ConnectionServiceProvider extends ServiceProvider
                 $connection->setTokenExpires($file->expires_in);
             }
 
+            //
+            if($connection->needsAuthentication()) {
+                return $connection;
+            }
+
             // Make the client connect and exchange tokens
             try {
                 $connection->connect();
             } catch (\Exception $e) {
-                $connection->redirectForAuthorization();
                 throw new \Exception('Could not connect to Exact: ' . $e->getMessage());
             }
 
@@ -71,20 +81,13 @@ class ConnectionServiceProvider extends ServiceProvider
             }
 
             if($updateOauthFile) {
-                file_put_contents(__DIR__.'/../../storage/oauth.json', json_encode($file));
+                // If storage/exact directory doesn't exist yet
+                if(file_exists(storage_path('exact')) === false) {
+                    // Create directory
+                    mkdir(storage_path('exact'));
+                }
+                file_put_contents(storage_path('exact/oauth.json'), json_encode($file));
             }
-
-            // Optionally, set the lock and unlock callbacks to prevent multiple request for acquiring a new refresh token with the same refresh token.
-//            $connection->setAcquireAccessTokenLockCallback(function() {
-//                echo "test";
-//                echo "test";
-//                echo "test";
-//            });
-//            $connection->setAcquireAccessTokenUnlockCallback(function() {
-//                echo "test2";
-//                echo "test2";
-//                echo "test2";
-//            });
 
             return $connection;
         });

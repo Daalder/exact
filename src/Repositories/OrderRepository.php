@@ -65,10 +65,8 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
         $salesOrder->DeliverTo        = $account->ID;
         $salesOrder->InvoiceTo        = $account->ID;
         $salesOrder->DeliveryAddress  = $deliveryAddress->ID;
-//        $salesOrder->WarehouseID      = '';
         $salesOrder->Remarks          = $order->comment;
         $salesOrder->YourRef          = $order->transaction_id;
-//        $salesOrder->PaymentCondition = $this->getPaymentCondition($order);
         $salesOrder->Description      = '';//$this->getDescription($order);
 
         $salesOrderLines = [];
@@ -77,22 +75,11 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
         foreach($order->orderrows as $orderrow) {
             // Get Exact ID for Daalder product on orderrow
             $productExactID = null;
+            // Match Daalder product to Exact Item based on sku
+            $item = new Item($connection);
+            $productExactID = $item->findId(trim($orderrow->sku));
 
-            if($orderrow->product) {
-                $productExactID = $this->productRepository->getExactIdFromProduct($orderrow->product);
-            }
-
-            // If Exact ID is not found for Daalder product
-            if(is_null($productExactID)) {
-                // Match Daalder product to Exact Item based on sku
-                $item = new Item($connection);
-                $productExactID = $item->findId(trim($orderrow->sku));
-
-                if($productExactID) {
-                    // Save matched Exact Item ID to Daalder product
-                    $this->productRepository->setExactIdIfNotExists($orderrow->product, $productExactID);
-                }
-            }
+            // TODO: if product not found (but $orderrow->sku is not null), create it in Exact
 
             // Get the Daalder VAT rate based on the orderrow VAT percentage
             $vatRate = VatRate::firstWhere('percentage', $orderrow->vat_rate);
