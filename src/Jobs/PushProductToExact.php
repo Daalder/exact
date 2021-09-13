@@ -45,51 +45,53 @@ class PushProductToExact implements ShouldQueue
         if(count($item) > 0) {
             /** @var Item $item */
             $item = $item[0];
+        } else {
+            $item = new Item($this->connection);
+        }
 
-            $vatRateCode = optional($this->product->vatRate)->exact_code
-                ?? app(VatRateRepository::class)->fetchPreferred()->exact_code;
+        $vatRateCode = optional($this->product->vatRate)->exact_code
+            ?? app(VatRateRepository::class)->fetchPreferred()->exact_code;
 
-            $item->Description = $this->product->name;
-            $item->Barcode = $this->product->ean;
-            $item->SalesVatCode = $vatRateCode;
-            $item->save();
+        $item->Description = $this->product->name;
+        $item->Barcode = $this->product->ean;
+        $item->SalesVatCode = $vatRateCode;
+        $item->save();
 
-            $salesItemPrices = new SalesItemPrice($this->connection);
-            $salesItemPrices = $salesItemPrices->filter(
-                "Item eq guid'".$item->ID."'",
-                '',
-                'ID, Item, Currency, Price, Quantity, Unit'
-            );
-            $salesItemPrices = collect($salesItemPrices);
+        $salesItemPrices = new SalesItemPrice($this->connection);
+        $salesItemPrices = $salesItemPrices->filter(
+            "Item eq guid'".$item->ID."'",
+            '',
+            'ID, Item, Currency, Price, Quantity, Unit'
+        );
+        $salesItemPrices = collect($salesItemPrices);
 
-            $matchedSalesItemPrices = collect();
+        $matchedSalesItemPrices = collect();
 
-            /** @var Price $price */
-            foreach($this->product->prices as $price) {
-                $formattedPrice = $price->price;
-                if($formattedPrice instanceof Money) {
-                    $formattedPrice = MoneyFactory::toString($formattedPrice);
-                }
-
-                $salesItemPrice = $salesItemPrices->firstWhere('Quantity', $price->amount);
-                if(is_null($salesItemPrice)) {
-                    $salesItemPrice = new SalesItemPrice($this->connection);
-                    $salesItemPrice->Item = $item->ID;
-                } else {
-                    $matchedSalesItemPrices->push($salesItemPrice->ID);
-                }
-
-                $salesItemPrice->Currency = $price->currency->code;
-                $salesItemPrice->Price = $formattedPrice;
-                $salesItemPrice->Quantity = $price->amount;
-                $salesItemPrice->Unit = 'pc';
-                $salesItemPrice->save();
+        /** @var Price $price */
+        foreach($this->product->prices as $price) {
+            $formattedPrice = $price->price;
+            if($formattedPrice instanceof Money) {
+                $formattedPrice = MoneyFactory::toString($formattedPrice);
             }
 
-            $notMatchedSalesItemPrices = $salesItemPrices->whereNotIn('ID', $matchedSalesItemPrices);
-            foreach($notMatchedSalesItemPrices as $salesItemPrice) {
-                $salesItemPrice->delete();
+            $salesItemPrice = $salesItemPrices->firstWhere('Quantity', $price->amount);
+            if(is_null($salesItemPrice)) {
+                $salesItemPrice = new SalesItemPrice($this->connection);
+                $salesItemPrice->Item = $item->ID;
+            } else {
+                $matchedSalesItemPrices->push($salesItemPrice->ID);
             }
+
+            $salesItemPrice->Currency = $price->currency->code;
+            $salesItemPrice->Price = $formattedPrice;
+            $salesItemPrice->Quantity = $price->amount;
+            $salesItemPrice->Unit = 'pc';
+            $salesItemPrice->save();
+        }
+
+        $notMatchedSalesItemPrices = $salesItemPrices->whereNotIn('ID', $matchedSalesItemPrices);
+        foreach($notMatchedSalesItemPrices as $salesItemPrice) {
+            $salesItemPrice->delete();
         }
     }
 }
