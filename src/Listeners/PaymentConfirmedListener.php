@@ -7,6 +7,6 @@ class PaymentConfirmedListener
 {
     public function handle(PaymentConfirmed $event)
     {
-        dispatch_now(new PushOrderToExact($event->payment->order));
+        dispatch(new PushOrderToExact($event->payment->order));
     }
 }

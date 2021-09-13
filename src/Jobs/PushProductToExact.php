@@ -47,6 +47,7 @@ class PushProductToExact implements ShouldQueue
             $item = $item[0];
         } else {
             $item = new Item($this->connection);
+            $item->Code = $code;
         }
 
         $vatRateCode = optional($this->product->vatRate)->exact_code
