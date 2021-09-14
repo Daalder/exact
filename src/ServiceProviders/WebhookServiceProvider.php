@@ -36,7 +36,8 @@ class WebhookServiceProvider extends ServiceProvider
                     $webhook->save();
                 }
             } catch (\Exception $e) {
-                throw new \Exception('Exception while connecting to Exact: '. $e->getMessage());
+                return;
+//                throw new \Exception('Exception while connecting to Exact: '. $e->getMessage());
             }
         }
     }
