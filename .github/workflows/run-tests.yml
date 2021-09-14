@@ -34,6 +34,7 @@ jobs:
 
             - name: Configure sysctl limits (required for ES)
               run: |
+                  echo $AUTHOR_FIRSTNAME;
                   sudo swapoff -a
                   sudo sysctl -w vm.swappiness=1
                   sudo sysctl -w fs.file-max=262144
