@@ -13,7 +13,6 @@ jobs:
                 os: [ubuntu-latest]
                 php: [7.4]
                 laravel: [8.*]
-#                dependency-version: [prefer-lowest, prefer-stable]
                 dependency-version: [prefer-stable]
                 include:
                     -   laravel: 8.*
@@ -21,13 +20,34 @@ jobs:
 
         name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.dependency-version }}
         steps:
-            - name: Set up MySQL
-              run: |
-                sudo /etc/init.d/mysql start
-                mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -uroot -proot
-
             -   name: Checkout code
                 uses: actions/checkout@v2
+
+            -   name: Get git commit data 1
+                uses: rlespinasse/git-commit-data-action@1.1.0
+
+            -   name: Get git commit data 2
+                run: |
+                    echo "AUTHOR_FIRSTNAME=$(echo $GIT_COMMIT_AUTHOR_NAME | head -n1 | cut -d ' ' -f1 | sed -e 's/\(.*\)/\L\1/')" >> $GITHUB_ENV
+                    echo "GIT_SHORT_HASH=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
+                    echo "GIT_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+            - name: Configure sysctl limits (required for ES)
+              run: |
+                  sudo swapoff -a
+                  sudo sysctl -w vm.swappiness=1
+                  sudo sysctl -w fs.file-max=262144
+                  sudo sysctl -w vm.max_map_count=262144
+
+            - name: Runs Elasticsearch
+              uses: elastic/elastic-github-actions/elasticsearch@master
+              with:
+                  stack-version: 6.8.14
+
+            -   name: Set up MySQL
+                run: |
+                    sudo /etc/init.d/mysql start
+                    mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -uroot -proot
 
             -   name: Setup PHP
                 uses: shivammathur/setup-php@v2
@@ -49,3 +69,16 @@ jobs:
 
             -   name: Execute tests
                 run: vendor/bin/phpunit
+
+            -   name: Post failure status to Slack
+                run: |
+                    echo ${{ job.status }}
+                    echo "$( echo \"${{ job.status }}\" )"
+                    echo job.status
+                    curl -X POST -H "Authorization: Bearer $BEARER_TOKEN" "$BASE_URL?channel=$CHANNEL&link_names=true&pretty=1" \
+                        --data-urlencode "text=$(if [ \"${{ job.status }}\" == \"failure\" ]; then echo ':no_entry: daalder/exact tests failed'; else echo ':white_check_mark: daalder/exact tests succeeded'; fi) for $(echo '`')$(echo $GIT_BRANCH)$(echo '`') @ $(echo '`')<$(echo https://github.com/Daalder/exact/commit/$GITHUB_SHA)|$GIT_SHORT_HASH>$(echo '`') $(if [ \"${{ job.status }}\" == \"failure\" ]; then echo 'by @$AUTHOR_FIRSTNAME'; fi) . Commit message: $(echo '`')$GIT_COMMIT_MESSAGE_SUBJECT$(echo '`')"
+                env:
+                    BEARER_TOKEN: ${{ secrets.SLACK_BEARER_TOKEN }}
+                    BASE_URL: https://slack.com/api/chat.postMessage
+                    CHANNEL: programmers
+                if: always() # Pick up events when the job fails or is canceled
