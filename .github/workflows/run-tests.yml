@@ -76,7 +76,7 @@ jobs:
                     echo "$( echo \"${{ job.status }}\" )"
                     echo job.status
                     curl -X POST -H "Authorization: Bearer $BEARER_TOKEN" "$BASE_URL?channel=$CHANNEL&link_names=true&pretty=1" \
-                        --data-urlencode "text=$(if [ \"${{ job.status }}\" == \"failure\" ]; then echo ':no_entry: Exact tests failed'; else echo ':white_check_mark: Exact tests succeeded'; fi) for $(echo '`')$(echo $GIT_BRANCH)$(echo '`') @ $(echo '`')<$(echo https://github.com/Daalder/exact/commit/$GITHUB_SHA)|$GIT_SHORT_HASH>$(echo '`') $(if [ \"${{ job.status }}\" == \"failure\" ]; then echo 'by @'$AUTHOR_FIRSTNAME; fi) . Commit message: $(echo '`')$GIT_COMMIT_MESSAGE_SUBJECT$(echo '`')"
+                        --data-urlencode "text=$(if [ \"${{ job.status }}\" == \"failure\" ]; then echo ':no_entry: daalder/exact tests failed'; else echo ':white_check_mark: daalder/exact tests succeeded'; fi) for $(echo '`')$(echo $GIT_BRANCH)$(echo '`') @ $(echo '`')<$(echo https://github.com/Daalder/exact/commit/$GITHUB_SHA)|$GIT_SHORT_HASH>$(echo '`') $(if [ \"${{ job.status }}\" == \"failure\" ]; then echo 'by @'$AUTHOR_FIRSTNAME; fi) . Commit message: $(echo '`')$GIT_COMMIT_MESSAGE_SUBJECT$(echo '`')"
                 env:
                     BEARER_TOKEN: ${{ secrets.SLACK_BEARER_TOKEN }}
                     BASE_URL: https://slack.com/api/chat.postMessage
