@@ -2,11 +2,11 @@
 ![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/daalder/exact/run-tests?label=tests)
 [![Quality Score](https://img.shields.io/scrutinizer/g/Daalder/exact.svg?style=flat-square)](https://scrutinizer-ci.com/g/Daalder/exact)
 
-# daalder/exact
-Exact integration for Daalder
+# Exact integration for Daalder
 
-##Setup instructions
-####Add the `daalder/exact` repository to your `composer.json`
+## Setup instructions
+
+#### Add the `daalder/exact` repository to your `composer.json`
 
 ```
 "repositories": [
@@ -17,21 +17,21 @@ Exact integration for Daalder
 ],
 ```
 
-####Install the package
+#### Install the package
 
 ``composer require daalder/exact``
 
-####Publish and run the migrations
+#### Publish and run the migrations
 
 ```
 php artisan vendor:publish --tag=daalder-exact-migrations
 php artisan migrate
 ```
 
-####Configure the VAT rates
+#### Configure the VAT rates
 
 A new column has been added to the Daalder `vat_rates` table (`exact_code`) that needs to be filled for each VAT rate. The package uses this field to match Daalder and Exact VAT rates. Please refer to the Exact documentation for fetching these VAT codes.
 
-####Authenticate with Exact
+#### Authenticate with Exact
 
 Perform a `GET` call to `/authenticate-exact`. Open the returned url in your browser and authenticate with Exact.
