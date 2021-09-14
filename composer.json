@@ -28,7 +28,8 @@
     "autoload": {
         "classmap": ["database"],
         "psr-4": {
-            "Daalder\\Exact\\": "src/"
+            "Daalder\\Exact\\": "src/",
+            "Daalder\\Tests\\": "tests/"
         }
     },
     "minimum-stability": "dev",
