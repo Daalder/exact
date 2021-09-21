@@ -8,6 +8,6 @@ use Pionect\Daalder\Models\Product\Stock;
 class StockObserver
 {
     public function saved(Stock $stock) {
-        PushStockToExact::dispatchNow($stock);
+//        PushStockToExact::dispatchNow($stock);
     }
 }
