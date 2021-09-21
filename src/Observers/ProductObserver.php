@@ -8,6 +8,6 @@ use Pionect\Daalder\Models\Product\Product;
 class ProductObserver
 {
     public function saved(Product $product) {
-        PushProductToExact::dispatchNow($product);
+        PushProductToExact::dispatch($product);
     }
 }
