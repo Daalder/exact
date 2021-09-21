@@ -29,10 +29,6 @@ class AddExactIdToOrdersAndCustomers extends Migration
      */
     public function down()
     {
-        Schema::table('product', function (Blueprint $table) {
-            $table->dropColumn('exact_id');
-        });
-
         Schema::table('orders', function (Blueprint $table) {
             $table->dropColumn('exact_id');
         });
