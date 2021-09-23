@@ -83,7 +83,7 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
             // Product with sku not found in Exact
             if(!$productExactID) {
                 // Create the product in Exact
-                PushProductToExact::dispatchNow($orderrow->product);
+                PushProductToExact::dispatchSync($orderrow->product);
 
                 // Fetch the newly created product from Exact
                 $item = new Item($connection);

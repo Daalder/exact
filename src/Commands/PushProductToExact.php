@@ -36,6 +36,6 @@ class PushProductToExact extends Command
             return;
         }
 
-        PushProductToExactJob::dispatchNow($product);
+        PushProductToExactJob::dispatchSync($product);
     }
 }
