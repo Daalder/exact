@@ -41,7 +41,13 @@ class CustomerRepository extends \Pionect\Daalder\Models\Customer\Repositories\C
             $account->ID = $exactId;
         }
 
-        $account->Name = $order->contact_firstname . ' ' . $order->contact_lastname;
+        if($order->contact_firstname) {
+            $name = $order->contact_firstname . ' ' . $order->contact_lastname;
+        } else {
+            $name = $order->customer->firstname . ' ' . $order->customer->firstname;
+        }
+
+        $account->Name = $name;
         $account->InvoicingMethod = 2;
         $account->Email = $order->email;
         $account->Phone = $order->mobile ?? $order->phone;
