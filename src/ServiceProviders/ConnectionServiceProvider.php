@@ -84,8 +84,8 @@ class ConnectionServiceProvider extends ServiceProvider
 
             // Set callbacks for locking/unlocking the token callback. This prevents multiple simultaneous requests
             // from messing up the stored tokens.
-            $connection->setAcquireAccessTokenLockCallback($this->lockExactTokenCall);
-            $connection->setAcquireAccessTokenUnlockCallback($this->unlockExactTokenCall);
+            $connection->setAcquireAccessTokenLockCallback([$this, 'lockExactTokenCall']);
+            $connection->setAcquireAccessTokenUnlockCallback([$this, 'unlockExactTokenCall']);
 
             try {
                 // Connect and exchange tokens
