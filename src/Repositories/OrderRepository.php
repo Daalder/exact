@@ -78,7 +78,9 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
             $productExactID = null;
             // Match Daalder product to Exact Item based on sku
             $item = new Item($connection);
-            $productExactID = $item->findId(trim($orderrow->sku));
+            
+            $sku = $orderrow->sku ?? optional($orderrow->product)->sku;
+            $productExactID = $item->findId(trim($sku));
 
             // Product with sku not found in Exact
             if(!$productExactID) {
@@ -87,7 +89,11 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
 
                 // Fetch the newly created product from Exact
                 $item = new Item($connection);
-                $productExactID = $item->findId(trim($orderrow->sku));
+                $productExactID = $item->findId(trim($sku));
+
+                if(!$productExactID) {
+                    throw new \Exception('ProductExactID is missing for sku ('.$sku.')');
+                }
             }
 
             // Get the Daalder VAT rate based on the orderrow VAT percentage
