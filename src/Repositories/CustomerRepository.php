@@ -47,15 +47,21 @@ class CustomerRepository extends \Pionect\Daalder\Models\Customer\Repositories\C
             $name = $order->customer->firstname . ' ' . $order->customer->firstname;
         }
 
+        if($order->invoice_address && $order->invoice_housenumber) {
+            $addressLine = $order->invoice_address . ' ' . $order->invoice_housenumber;
+        } else {
+            $addressLine = $order->customer->invoice_address . ' ' . $order->customer->invoice_housenumber;
+        }
+
         $account->Name = $name;
         $account->InvoicingMethod = 2;
-        $account->Email = $order->email;
-        $account->Phone = $order->mobile ?? $order->phone;
+        $account->Email = $order->email ?? $order->customer->email;
+        $account->Phone = $order->mobile ?? $order->phone ?? $order->customer->mobile ?? $order->customer->telephone;
         $account->Status = 'C';
-        $account->AddressLine1 = $order->invoice_address . ' ' . $order->invoice_housenumber;
-        $account->City = $order->invoice_city;
-        $account->Postcode = $order->invoice_postalcode;
-        $account->Country = $order->country_code;
+        $account->AddressLine1 = $addressLine;
+        $account->City = $order->invoice_city ?? $order->customer->invoice_city;
+        $account->Postcode = $order->invoice_postalcode ?? $order->customer->invoice_postalcode;
+        $account->Country = $order->country_code ?? $order->customer->invoice_country_code;
 //        $account->SalesVATCode = $this->getVATCode($order);
 
         $account->save();
