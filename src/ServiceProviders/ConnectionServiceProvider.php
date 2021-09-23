@@ -84,8 +84,32 @@ class ConnectionServiceProvider extends ServiceProvider
 
             // Set callbacks for locking/unlocking the token callback. This prevents multiple simultaneous requests
             // from messing up the stored tokens.
-            $connection->setAcquireAccessTokenLockCallback([$this, 'lockExactTokenCall']);
-            $connection->setAcquireAccessTokenUnlockCallback([$this, 'unlockExactTokenCall']);
+            $connection->setAcquireAccessTokenLockCallback(function() {
+                // If another thread is currently doing a token request
+                if(cache()->get('exact-lock') === true) {
+                    $startTime = now();
+
+                    // Wait for the other thread to unlock the exact-lock
+                    do {
+                        // Wait 100ms before testing the lock again
+                        sleep(0.1);
+
+                        // If the wait timeout was exceeded
+                        if($startTime->diffInSeconds(now()) > 10) {
+                            // Fail this thread/request
+                            throw new \Exception('Exact lock time exceeded');
+                        }
+                    } while(cache()->get('exact-lock') === true);
+                }
+
+                // Lock the exact-lock (because this thread will now do a token request)
+                cache()->set('exact-lock', true);
+            });
+
+            $connection->setAcquireAccessTokenUnlockCallback(function() {
+                // Unlock the exact-lock
+                cache()->set('exact-lock', false);
+            });
 
             try {
                 // Connect and exchange tokens
@@ -98,32 +122,5 @@ class ConnectionServiceProvider extends ServiceProvider
             // Always return a Connection, even if it didn't authenticate successfully
             return $connection;
         });
-    }
-
-    private function lockExactTokenCall() {
-        // If another thread is currently doing a token request
-        if(cache()->get('exact-lock') === true) {
-            $startTime = now();
-
-            // Wait for the other thread to unlock the exact-lock
-            do {
-                // Wait 100ms before testing the lock again
-                sleep(0.1);
-
-                // If the wait timeout was exceeded
-                if($startTime->diffInSeconds(now()) > 10) {
-                    // Fail this thread/request
-                    throw new \Exception('Exact lock time exceeded');
-                }
-            } while(cache()->get('exact-lock') === true);
-        }
-
-        // Lock the exact-lock (because this thread will now do a token request)
-        cache()->set('exact-lock', true);
-    }
-
-    private function unlockExactTokenCall() {
-        // Unlock the exact-lock
-        cache()->set('exact-lock', false);
     }
 }
