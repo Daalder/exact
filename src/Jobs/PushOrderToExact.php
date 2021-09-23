@@ -21,29 +21,26 @@ class PushOrderToExact implements ShouldQueue
      */
     protected $order;
 
-    /**
-     * @var Connection $connection
-     */
-    protected $connection;
-
     public function __construct(Order $order)
     {
         $this->order = $order;
-        $this->connection = app(Connection::class);
     }
 
     public function handle(
         OrderRepository $orderRepository,
         CustomerRepository $customerRepository
     ) {
+        // Resolve Picqer Connection
+        $connection = app(Connection::class);
+
         // If order hasn't been pushed yet
         if (
             is_null($orderRepository->getExactIdFromOrder($this->order))
         ) {
             // Create Exact Account (customer)
-            $account = $customerRepository->updateOrCreateExactCustomerFromOrder($this->connection, $this->order);
+            $account = $customerRepository->updateOrCreateExactCustomerFromOrder($connection, $this->order);
             // Create Exact Address
-            $deliveryAddress = $orderRepository->createExactDeliveryAddressFromOrder($this->connection, $this->order, $account);
+            $deliveryAddress = $orderRepository->createExactDeliveryAddressFromOrder($connection, $this->order, $account);
 
             // If no invoice address is available
 //            if (!$this->order->invoice_address) {
@@ -54,7 +51,7 @@ class PushOrderToExact implements ShouldQueue
 //            }
 
             // Make order
-            $exactOrder = $orderRepository->createExactOrder($this->connection, $this->order, $account, $deliveryAddress);
+            $exactOrder = $orderRepository->createExactOrder($connection, $this->order, $account, $deliveryAddress);
 
 //            $this->pushDiscount($exactOrder);
         }

@@ -25,28 +25,25 @@ class PushProductToExact implements ShouldQueue
      */
     protected $product;
 
-    /**
-     * @var Connection $connection
-     */
-    protected $connection;
-
     public function __construct(Product $product)
     {
         $this->product = $product->fresh();
-        $this->connection = app(Connection::class);
     }
 
     public function handle() {
+        // Resolve Picqer Connection
+        $connection = app(Connection::class);
+
         $code = $this->product->sku;
 
-        $item = new Item($this->connection);
+        $item = new Item($connection);
         $item = $item->filter("Code eq '".$code."'");
 
         if(count($item) > 0) {
             /** @var Item $item */
             $item = $item[0];
         } else {
-            $item = new Item($this->connection);
+            $item = new Item($connection);
             $item->Code = $code;
         }
 
@@ -58,7 +55,7 @@ class PushProductToExact implements ShouldQueue
         $item->SalesVatCode = $vatRateCode;
         $item->save();
 
-        $salesItemPrices = new SalesItemPrice($this->connection);
+        $salesItemPrices = new SalesItemPrice($connection);
         $salesItemPrices = $salesItemPrices->filter(
             "Item eq guid'".$item->ID."'",
             '',
@@ -77,7 +74,7 @@ class PushProductToExact implements ShouldQueue
 
             $salesItemPrice = $salesItemPrices->firstWhere('Quantity', $price->amount);
             if(is_null($salesItemPrice)) {
-                $salesItemPrice = new SalesItemPrice($this->connection);
+                $salesItemPrice = new SalesItemPrice($connection);
                 $salesItemPrice->Item = $item->ID;
             } else {
                 $matchedSalesItemPrices->push($salesItemPrice->ID);
