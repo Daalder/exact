@@ -112,6 +112,12 @@ class ConnectionServiceProvider extends ServiceProvider
             });
 
             try {
+                if($connection->needsAuthentication()) {
+                    // Don't continue, because it will redirect every request to the Exact ouath page (and fail there)
+                    Logger()->error('Could not connect to Exact: Authentication (/authenticate-exact) needed.');
+                    return $connection;
+                }
+
                 // Connect and exchange tokens
                 $connection->connect();
             } catch (\Exception $e) {
