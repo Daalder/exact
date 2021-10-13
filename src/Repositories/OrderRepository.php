@@ -143,15 +143,21 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
         Order $order,
         Account $account
     ) : Address {
+        if($order->invoice_address && $order->invoice_housenumber) {
+            $addressLine = $order->invoice_address . ' ' . $order->invoice_housenumber;
+        } else {
+            $addressLine = $order->customer->invoice_address . ' ' . $order->customer->invoice_housenumber;
+        }
+
         $address = new Address($connection);
         $address->Account = $account->ID;
-        $address->AddressLine1 = $order->address . ' ' . $order->housenumber;
-        $address->City = $order->city;
-        $address->Postcode = $order->postalcode;
-        $address->Phone = $order->mobile ?? $order->phone;
-        $address->AddressLine2 = $order->email;
-        $address->AddressLine3 = $order->mobile ?? $order->phone;
-        $address->Country = $order->country_code;
+        $address->AddressLine1 = $addressLine;
+        $address->City = $order->city ?? $order->customer->invoice_city;
+        $address->Postcode = $order->postalcode ?? $order->customer->invoice_postalcode;
+        $address->Phone = $order->mobile ?? $order->phone ?? $order->customer->mobile ?? $order->customer->telephone;
+        $address->AddressLine2 = $order->email ?? $order->customer->email;
+        $address->AddressLine3 = $order->mobile ?? $order->phone ?? $order->customer->mobile ?? $order->customer->telephone;
+        $address->Country = $order->country_code ?? $order->customer->invoice_country_code ?? 'NL';
         $address->Type = 4;
         $address->save();
 
