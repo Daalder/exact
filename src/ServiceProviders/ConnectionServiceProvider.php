@@ -135,7 +135,7 @@ class ConnectionServiceProvider extends ServiceProvider
                 }
 
                 // If access token is not set or token has expired, acquire new token
-                if (empty($this->accessToken) || $this->tokenHasExpired()) {
+                if (empty($connection->getAccessToken()) || ($connection->getTokenExpires() - 10) < time()) {
                     Logger()->warning('Exact - ('.request()->fullUrl().') Attempt to do oauth.');
                 }
 
