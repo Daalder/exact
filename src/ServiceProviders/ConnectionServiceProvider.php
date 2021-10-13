@@ -116,13 +116,13 @@ class ConnectionServiceProvider extends ServiceProvider
                     } while(cache()->get('exact-lock') === true);
                 }
 
-                Logger()->warning('Exact - ('.request()->fullUrl().') exiting exact-lock');
+                Logger()->warning('Exact - ('.request()->fullUrl().') set exact-lock = true');
                 // Lock the exact-lock (because this thread will now do a token request)
                 cache()->set('exact-lock', true);
             });
 
             $connection->setAcquireAccessTokenUnlockCallback(function() {
-                Logger()->warning('Exact - ('.request()->fullUrl().') set exact-lock = true');
+                Logger()->warning('Exact - ('.request()->fullUrl().') set exact-lock = false');
                 // Unlock the exact-lock
                 cache()->set('exact-lock', false);
             });
