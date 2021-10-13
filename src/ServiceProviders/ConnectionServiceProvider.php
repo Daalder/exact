@@ -18,6 +18,17 @@ class ConnectionServiceProvider extends ServiceProvider
         $this->app->singleton(Connection::class, function () {
             // Create Connection instance and setup some config keys
             $connection = new Connection();
+
+            // If the config keys haven't been set, return the fresh (non-functional) $connection
+            if(
+                is_null(config('daalder-exact.callback_url')) ||
+                is_null(config('daalder-exact.client_id')) ||
+                is_null(config('daalder-exact.client_secret')) ||
+                is_null(config('daalder-exact.base_url'))
+            ) {
+                return $connection;
+            }
+
             $connection->setRedirectUrl(config('daalder-exact.callback_url'));
             $connection->setExactClientId(config('daalder-exact.client_id'));
             $connection->setExactClientSecret(config('daalder-exact.client_secret'));
@@ -54,7 +65,7 @@ class ConnectionServiceProvider extends ServiceProvider
 
             // Set callback on connection for storing newly fetched codes/tokens
             $connection->setTokenUpdateCallback(function() use ($file, $connection) {
-                Logger()->warning('Exact - ('.request()->fullUrlWithQuery().') setTokenUpdateCallback');
+                Logger()->warning('Exact - ('.request()->fullUrl().') setTokenUpdateCallback');
                 $updateOauthFile = false;
 
                 if (optional($file)->access_token !== $connection->getAccessToken()) {
@@ -88,7 +99,7 @@ class ConnectionServiceProvider extends ServiceProvider
             $connection->setAcquireAccessTokenLockCallback(function() {
                 // If another thread is currently doing a token request
                 if(cache()->get('exact-lock') === true) {
-                    Logger()->warning('Exact - ('.request()->fullUrlWithQuery().') exact-lock === true');
+                    Logger()->warning('Exact - ('.request()->fullUrl().') exact-lock === true');
 
                     $startTime = now();
 
@@ -105,13 +116,13 @@ class ConnectionServiceProvider extends ServiceProvider
                     } while(cache()->get('exact-lock') === true);
                 }
 
-                Logger()->warning('Exact - ('.request()->fullUrlWithQuery().') exiting exact-lock');
+                Logger()->warning('Exact - ('.request()->fullUrl().') exiting exact-lock');
                 // Lock the exact-lock (because this thread will now do a token request)
                 cache()->set('exact-lock', true);
             });
 
             $connection->setAcquireAccessTokenUnlockCallback(function() {
-                Logger()->warning('Exact - ('.request()->fullUrlWithQuery().') setAcquireAccessTokenUnlockCallback');
+                Logger()->warning('Exact - ('.request()->fullUrl().') setAcquireAccessTokenUnlockCallback');
                 // Unlock the exact-lock
                 cache()->set('exact-lock', false);
             });
@@ -123,7 +134,7 @@ class ConnectionServiceProvider extends ServiceProvider
                     return $connection;
                 }
 
-                Logger()->warning('Exact - ('.request()->fullUrlWithQuery().') $connection->connect()');
+                Logger()->warning('Exact - ('.request()->fullUrl().') $connection->connect()');
                 // Connect and exchange tokens
                 $connection->connect();
             } catch (\Exception $e) {
