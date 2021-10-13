@@ -65,7 +65,7 @@ class ConnectionServiceProvider extends ServiceProvider
 
             // Set callback on connection for storing newly fetched codes/tokens
             $connection->setTokenUpdateCallback(function() use ($file, $connection) {
-                Logger()->warning('Exact - ('.request()->fullUrl().') setTokenUpdateCallback');
+                Logger()->warning('Exact - ('.request()->fullUrl().') tokenUpdateCallback');
                 $updateOauthFile = false;
 
                 if (optional($file)->access_token !== $connection->getAccessToken()) {
@@ -122,7 +122,7 @@ class ConnectionServiceProvider extends ServiceProvider
             });
 
             $connection->setAcquireAccessTokenUnlockCallback(function() {
-                Logger()->warning('Exact - ('.request()->fullUrl().') setAcquireAccessTokenUnlockCallback');
+                Logger()->warning('Exact - ('.request()->fullUrl().') set exact-lock = true');
                 // Unlock the exact-lock
                 cache()->set('exact-lock', false);
             });
