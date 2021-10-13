@@ -54,6 +54,7 @@ class ConnectionServiceProvider extends ServiceProvider
 
             // Set callback on connection for storing newly fetched codes/tokens
             $connection->setTokenUpdateCallback(function() use ($file, $connection) {
+                Logger()->warning('Exact - ('.request()->fullUrlWithQuery().') setTokenUpdateCallback');
                 $updateOauthFile = false;
 
                 if (optional($file)->access_token !== $connection->getAccessToken()) {
@@ -87,6 +88,8 @@ class ConnectionServiceProvider extends ServiceProvider
             $connection->setAcquireAccessTokenLockCallback(function() {
                 // If another thread is currently doing a token request
                 if(cache()->get('exact-lock') === true) {
+                    Logger()->warning('Exact - ('.request()->fullUrlWithQuery().') exact-lock === true');
+
                     $startTime = now();
 
                     // Wait for the other thread to unlock the exact-lock
@@ -102,11 +105,13 @@ class ConnectionServiceProvider extends ServiceProvider
                     } while(cache()->get('exact-lock') === true);
                 }
 
+                Logger()->warning('Exact - ('.request()->fullUrlWithQuery().') exiting exact-lock');
                 // Lock the exact-lock (because this thread will now do a token request)
                 cache()->set('exact-lock', true);
             });
 
             $connection->setAcquireAccessTokenUnlockCallback(function() {
+                Logger()->warning('Exact - ('.request()->fullUrlWithQuery().') setAcquireAccessTokenUnlockCallback');
                 // Unlock the exact-lock
                 cache()->set('exact-lock', false);
             });
@@ -114,15 +119,16 @@ class ConnectionServiceProvider extends ServiceProvider
             try {
                 if($connection->needsAuthentication()) {
                     // Don't continue, because it will redirect every request to the Exact ouath page (and fail there)
-                    Logger()->error('Could not connect to Exact: Authentication (/authenticate-exact) needed.');
+                    Logger()->error('Exact - Could not connect: Authentication (/authenticate-exact) needed.');
                     return $connection;
                 }
 
+                Logger()->warning('Exact - ('.request()->fullUrlWithQuery().') $connection->connect()');
                 // Connect and exchange tokens
                 $connection->connect();
             } catch (\Exception $e) {
                 // Log connection exception
-                Logger()->error('Could not connect to Exact: ' . $e->getMessage());
+                Logger()->error('Exact - Could not connect: ' . $e->getMessage());
             }
 
             // Always return a Connection, even if it didn't authenticate successfully
