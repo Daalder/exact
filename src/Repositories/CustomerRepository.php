@@ -61,7 +61,7 @@ class CustomerRepository extends \Pionect\Daalder\Models\Customer\Repositories\C
         $account->AddressLine1 = $addressLine;
         $account->City = $order->invoice_city ?? $order->customer->invoice_city;
         $account->Postcode = $order->invoice_postalcode ?? $order->customer->invoice_postalcode;
-        $account->Country = $order->country_code ?? $order->customer->invoice_country_code;
+        $account->Country = $order->country_code ?? $order->customer->invoice_country_code ?? 'NL';
 //        $account->SalesVATCode = $this->getVATCode($order);
 
         $account->save();
