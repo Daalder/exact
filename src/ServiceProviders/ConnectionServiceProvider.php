@@ -134,7 +134,11 @@ class ConnectionServiceProvider extends ServiceProvider
                     return $connection;
                 }
 
-                Logger()->warning('Exact - ('.request()->fullUrl().') $connection->connect()');
+                // If access token is not set or token has expired, acquire new token
+                if (empty($this->accessToken) || $this->tokenHasExpired()) {
+                    Logger()->warning('Exact - ('.request()->fullUrl().') Attempt to do oauth.');
+                }
+
                 // Connect and exchange tokens
                 $connection->connect();
             } catch (\Exception $e) {
