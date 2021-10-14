@@ -97,9 +97,11 @@ class ConnectionServiceProvider extends ServiceProvider
             // Set callbacks for locking/unlocking the token callback. This prevents multiple simultaneous requests
             // from messing up the stored tokens.
             $connection->setAcquireAccessTokenLockCallback(function() {
+                $lock = Cache::lock('exact-lock');
+
                 // If another thread is currently doing a token request
-                if(cache()->get('exact-lock') === true) {
-                    Logger()->warning('Exact - ('.request()->fullUrl().') exact-lock === true');
+                if($lock->get() === false) {
+                    Logger()->warning('Exact - ('.request()->fullUrl().') exact oauth call is locked. Waiting...');
 
                     $startTime = now();
 
@@ -113,18 +115,18 @@ class ConnectionServiceProvider extends ServiceProvider
                             // Fail this thread/request
                             throw new \Exception('Exact lock time exceeded');
                         }
-                    } while(cache()->get('exact-lock') === true);
+                    } while($lock->get() === false);
+                } else {
+                    Logger()->warning('Exact - ('.request()->fullUrl().') locking exact oauth call.');
                 }
 
-                Logger()->warning('Exact - ('.request()->fullUrl().') set exact-lock = true');
-                // Lock the exact-lock (because this thread will now do a token request)
-                cache()->set('exact-lock', true);
+                Logger()->warning('Exact - ('.request()->fullUrl().') passed lock check on exact oauth call.');
             });
 
             $connection->setAcquireAccessTokenUnlockCallback(function() {
-                Logger()->warning('Exact - ('.request()->fullUrl().') set exact-lock = false');
+                Logger()->warning('Exact - ('.request()->fullUrl().') releasing lock on exact oauth call');
                 // Unlock the exact-lock
-                cache()->set('exact-lock', false);
+                Cache::lock('exact-lock')->release();
             });
 
             try {
