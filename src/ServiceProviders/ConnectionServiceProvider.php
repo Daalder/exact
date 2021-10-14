@@ -97,7 +97,7 @@ class ConnectionServiceProvider extends ServiceProvider
             // Set callbacks for locking/unlocking the token callback. This prevents multiple simultaneous requests
             // from messing up the stored tokens.
             $connection->setAcquireAccessTokenLockCallback(function() {
-                $lock = Cache::lock('exact-lock');
+                $lock = Cache::lock('exact-lock', 8);
 
                 // If another thread is currently doing a token request
                 if($lock->get() === false) {
@@ -126,7 +126,7 @@ class ConnectionServiceProvider extends ServiceProvider
             $connection->setAcquireAccessTokenUnlockCallback(function() {
                 Logger()->warning('Exact - ('.request()->fullUrl().') releasing lock on exact oauth call');
                 // Unlock the exact-lock
-                Cache::lock('exact-lock')->release();
+                Cache::lock('exact-lock', 8)->release();
             });
 
             try {
