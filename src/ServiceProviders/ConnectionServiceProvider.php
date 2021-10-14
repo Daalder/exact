@@ -113,7 +113,7 @@ class ConnectionServiceProvider extends ServiceProvider
                         // If the wait timeout was exceeded
                         if($startTime->diffInSeconds(now()) > 10) {
                             // Fail this thread/request
-                            throw new \Exception('Exact lock time exceeded');
+                            throw new \Exception('Exact - ('.request()->fullUrl().') lock time exceeded');
                         }
                     } while($lock->get() === false);
                 } else {
@@ -132,7 +132,7 @@ class ConnectionServiceProvider extends ServiceProvider
             try {
                 if($connection->needsAuthentication()) {
                     // Don't continue, because it will redirect every request to the Exact ouath page (and fail there)
-                    Logger()->error('Exact - Could not connect: Authentication (/authenticate-exact) needed.');
+                    Logger()->error('Exact - ('.request()->fullUrl().') Could not connect: Authentication (/authenticate-exact) needed.');
                     return $connection;
                 }
 
@@ -145,7 +145,7 @@ class ConnectionServiceProvider extends ServiceProvider
                 $connection->connect();
             } catch (\Exception $e) {
                 // Log connection exception
-                Logger()->error('Exact - Could not connect: ' . $e->getMessage());
+                Logger()->error('Exact - ('.request()->fullUrl().') Could not connect: ' . $e->getMessage());
             }
 
             // Always return a Connection, even if it didn't authenticate successfully
