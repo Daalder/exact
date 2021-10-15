@@ -2,6 +2,7 @@
 
 namespace Daalder\Exact\Jobs;
 
+use Daalder\Exact\Services\ConnectionFactory;
 use Money\Money;
 use Picqer\Financials\Exact\SalesItemPrice;
 use Pionect\Daalder\Models\Price\Price;
@@ -32,7 +33,7 @@ class PushProductToExact implements ShouldQueue
 
     public function handle() {
         // Resolve Picqer Connection
-        $connection = app(Connection::class);
+        $connection = ConnectionFactory::getConnection();
 
         $code = $this->product->sku;
 

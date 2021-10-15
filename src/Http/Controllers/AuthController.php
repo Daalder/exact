@@ -3,6 +3,7 @@
 namespace Daalder\Exact\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Daalder\Exact\Services\ConnectionFactory;
 use Illuminate\Http\Request;
 use Picqer\Financials\Exact\Connection;
 
@@ -25,7 +26,7 @@ class AuthController extends Controller
 
     public function authenticateExact(Request $request) {
         /** @var Connection $connection */
-        $connection = app(Connection::class);
+        $connection = ConnectionFactory::getConnection();
 
         return response()->json([
             'auth_url' => $connection->getAuthUrl()

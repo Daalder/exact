@@ -2,6 +2,7 @@
 
 namespace Daalder\Exact\Jobs;
 
+use Daalder\Exact\Services\ConnectionFactory;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,7 +30,7 @@ class PushStockToExact implements ShouldQueue
 
     public function handle() {
         // Resolve Picqer Connection
-        $connection = app(Connection::class);
+        $connection = ConnectionFactory::getConnection();
 
         $code = $this->stock->product->sku;
 

@@ -4,6 +4,7 @@ namespace Daalder\Exact\Jobs;
 
 use Daalder\Exact\Repositories\CustomerRepository;
 use Daalder\Exact\Repositories\OrderRepository;
+use Daalder\Exact\Services\ConnectionFactory;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,7 +32,7 @@ class PushOrderToExact implements ShouldQueue
         CustomerRepository $customerRepository
     ) {
         // Resolve Picqer Connection
-        $connection = app(Connection::class);
+        $connection = ConnectionFactory::getConnection();
 
         // If order hasn't been pushed yet
         if (

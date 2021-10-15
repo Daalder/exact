@@ -6,7 +6,6 @@ use Daalder\Exact\Commands\PushProductToExact;
 use Daalder\Exact\ServiceProviders\EventServiceProvider;
 use Daalder\Exact\ServiceProviders\WebhookServiceProvider;
 use Illuminate\Support\ServiceProvider;
-use Daalder\Exact\ServiceProviders\ConnectionServiceProvider;
 use Daalder\Exact\ServiceProviders\ObservationServiceProvider;
 
 class ExactServiceProvider extends ServiceProvider
@@ -53,7 +52,6 @@ class ExactServiceProvider extends ServiceProvider
             __DIR__.'/../config/daalder-exact.php', 'daalder-exact'
         );
 
-        $this->app->register(ConnectionServiceProvider::class);
         $this->app->register(ObservationServiceProvider::class);
         $this->app->register(EventServiceProvider::class);
         $this->app->register(WebhookServiceProvider::class);

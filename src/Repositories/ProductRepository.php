@@ -2,6 +2,7 @@
 
 namespace Daalder\Exact\Repositories;
 
+use Daalder\Exact\Services\ConnectionFactory;
 use Picqer\Financials\Exact\Connection;
 use Picqer\Financials\Exact\Item;
 use Pionect\Daalder\Models\Product\Product;
@@ -13,7 +14,7 @@ class ProductRepository extends \Pionect\Daalder\Models\Product\Repositories\Pro
      * @return null
      */
     public function getProductFromExactId(string $exactId) {
-        $connection = app(Connection::class);
+        $connection = ConnectionFactory::getConnection();
         if($connection->needsAuthentication()) {
             throw new \Exception("Connection to Exact is not authenticated! Call the 'authenticate-exact' endpoint to fix this.");
         }

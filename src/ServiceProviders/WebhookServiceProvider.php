@@ -2,6 +2,7 @@
 
 namespace Daalder\Exact\ServiceProviders;
 
+use Daalder\Exact\Services\ConnectionFactory;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Picqer\Financials\Exact\Connection;
@@ -17,7 +18,7 @@ class WebhookServiceProvider extends ServiceProvider
         ) {
             try {
                 /** @var Connection $client */
-                $connection = app(Connection::class);
+                $connection = ConnectionFactory::getConnection();
                 // If the connection is not authenticated, don't attempt to register webhooks. Otherwise, this would
                 // break the entire application (including the authenticate-exact endpoint), since this method is
                 // called for every request the user makes.

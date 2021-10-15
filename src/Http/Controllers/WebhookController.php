@@ -4,6 +4,7 @@ namespace Daalder\Exact\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Daalder\Exact\Repositories\ProductRepository;
+use Daalder\Exact\Services\ConnectionFactory;
 use Illuminate\Http\Request;
 use Picqer\Financials\Exact\Connection;
 use Picqer\Financials\Exact\StockPosition;
@@ -41,7 +42,7 @@ class WebhookController extends Controller
         $stockPositionID = $request->all()['Content']['Key'];
 
         /** @var Connection $connection */
-        $connection = app(Connection::class);
+        $connection = ConnectionFactory::getConnection();
         if($connection->needsAuthentication()) {
             throw new \Exception("Connection to Exact is not authenticated! Call the 'authenticate-exact' endpoint to fix this.");
         }
