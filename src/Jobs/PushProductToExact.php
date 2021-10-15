@@ -47,8 +47,7 @@ class PushProductToExact implements ShouldQueue
             $item->Code = $code;
         }
 
-        $vatRateCode = optional($this->product->vatRate)->exact_code
-            ?? app(VatRateRepository::class)->fetchPreferred()->exact_code;
+        $vatRateCode = $this->product->getActiveVatRate()->exact_code;
 
         $item->Description = $this->product->name;
         $item->Barcode = $this->product->ean;
