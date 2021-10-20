@@ -7,13 +7,25 @@ use Picqer\Financials\Exact\Connection;
 
 class ConnectionFactory
 {
+    /**
+     * @var int $threadTimeout
+     * @comment The time (in seconds) a thread will wait for it's turn to do oauth before failing
+     */
+    private static $threadTimeout = 3000;
+
+    /**
+     * @var int $lockTimeout
+     * @comment The time (in seconds) the exact-lock will be locked before opening automatically
+     */
+    private static $lockTimeout = 300;
+
     public static function getConnection()
     {
         // Create Connection instance and setup some config keys
         $connection = new Connection();
 
         // If the config keys haven't been set, return the fresh (non-functional) $connection
-        if(self::exactConfigKeysValid()) {
+        if(self::exactConfigKeysValid() === false) {
             return $connection;
         }
 
@@ -24,15 +36,15 @@ class ConnectionFactory
         self::loadOauthKeysIntoConnection($connection);
 
         // Set callback on connection for storing newly fetched codes/tokens
-        $connection->setTokenUpdateCallback(self::tokenUpdateCallback());
+        $connection->setTokenUpdateCallback([self::class, 'tokenUpdateCallback']);
 
-        $connection->setRefreshAccessTokenCallback(self::refreshAccessTokenCallback());
+        $connection->setRefreshAccessTokenCallback([self::class, 'refreshAccessTokenCallback']);
 
         // Set callbacks for locking/unlocking the token callback. This prevents multiple simultaneous requests
         // from messing up the stored tokens.
-        $connection->setAcquireAccessTokenLockCallback(self::acquireAccessTokenLockCallback());
+        $connection->setAcquireAccessTokenLockCallback([self::class, 'acquireAccessTokenLockCallback']);
 
-        $connection->setAcquireAccessTokenUnlockCallback(self::acquireAccessTokenUnlockCallback());
+        $connection->setAcquireAccessTokenUnlockCallback([self::class, 'acquireAccessTokenUnlockCallback']);
 
         try {
             if($connection->needsAuthentication()) {
@@ -57,7 +69,7 @@ class ConnectionFactory
         return $connection;
     }
 
-    private function exactConfigKeysValid() {
+    private static function exactConfigKeysValid() {
         return
             !is_null(config('daalder-exact.callback_url')) &&
             !is_null(config('daalder-exact.client_id')) &&
@@ -65,14 +77,14 @@ class ConnectionFactory
             !is_null(config('daalder-exact.base_url'));
     }
 
-    private function loadExactConfigIntoConnection(Connection $connection) {
+    private static function loadExactConfigIntoConnection(Connection $connection) {
         $connection->setRedirectUrl(config('daalder-exact.callback_url'));
         $connection->setExactClientId(config('daalder-exact.client_id'));
         $connection->setExactClientSecret(config('daalder-exact.client_secret'));
         $connection->setBaseUrl(config('daalder-exact.base_url'));
     }
 
-    private function loadOauthKeysIntoConnection(Connection $connection) {
+    private static function loadOauthKeysIntoConnection(Connection $connection) {
         // Get contents of file oauth.json
         $file = '';
         try {
@@ -103,7 +115,7 @@ class ConnectionFactory
         }
     }
 
-    public function tokenUpdateCallback(Connection $connection) {
+    public static function tokenUpdateCallback(Connection $connection) {
         $file = new \stdClass();
         $file->access_token = $connection->getAccessToken();
         $file->refresh_token = $connection->getRefreshToken();
@@ -117,12 +129,12 @@ class ConnectionFactory
         file_put_contents(storage_path('exact/oauth.json'), json_encode($file));
     }
 
-    public function refreshAccessTokenCallback(Connection $connection) {
+    public static function refreshAccessTokenCallback(Connection $connection) {
         self::loadOauthKeysIntoConnection($connection);
     }
 
-    public function acquireAccessTokenLockCallback(Connection $connection) {
-        $lock = Cache::lock('exact-lock', 8);
+    public static function acquireAccessTokenLockCallback(Connection $connection) {
+        $lock = Cache::lock('exact-lock', self::$lockTimeout);
 
         // If another thread is currently doing a token request
         if($lock->get() === false) {
@@ -136,7 +148,7 @@ class ConnectionFactory
                 sleep(0.1);
 
                 // If the wait timeout was exceeded
-                if($startTime->diffInSeconds(now()) > 10) {
+                if($startTime->diffInSeconds(now()) > self::$threadTimeout) {
                     // Fail this thread/request
                     throw new \Exception('Exact - ('.request()->fullUrl().') lock time exceeded');
                 }
@@ -148,9 +160,9 @@ class ConnectionFactory
         Logger()->warning('Exact - ('.request()->fullUrl().') passed lock check on exact oauth call.');
     }
 
-    public function acquireAccessTokenUnlockCallback(Connection $connection) {
+    public static function acquireAccessTokenUnlockCallback(Connection $connection) {
         Logger()->warning('Exact - ('.request()->fullUrl().') releasing lock on exact oauth call');
         // Unlock the exact-lock
-        Cache::lock('exact-lock', 8)->release();
+        Cache::lock('exact-lock')->forceRelease();
     }
 }
