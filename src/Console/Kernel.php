@@ -17,6 +17,6 @@ class Kernel extends ConsoleKernel {
     {
         parent::schedule($schedule);
 
-        $schedule->job(RegisterWebhooks::class)->dailyAt('16:07');
+        $schedule->job(RegisterWebhooks::class)->daily();
     }
 }
