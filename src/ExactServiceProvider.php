@@ -4,7 +4,6 @@ namespace Daalder\Exact;
 
 use Daalder\Exact\Commands\PushProductToExact;
 use Daalder\Exact\ServiceProviders\EventServiceProvider;
-use Daalder\Exact\ServiceProviders\WebhookServiceProvider;
 use Illuminate\Support\ServiceProvider;
 use Daalder\Exact\ServiceProviders\ObservationServiceProvider;
 
@@ -54,6 +53,12 @@ class ExactServiceProvider extends ServiceProvider
 
         $this->app->register(ObservationServiceProvider::class);
         $this->app->register(EventServiceProvider::class);
-        $this->app->register(WebhookServiceProvider::class);
+
+        $this->app->singleton('daalder.exact.console.kernel', function($app) {
+            $dispatcher = $app->make(\Illuminate\Contracts\Events\Dispatcher::class);
+            return new \Daalder\Exact\Console\Kernel($app, $dispatcher);
+        });
+
+        $this->app->make('daalder.exact.console.kernel');
     }
 }
