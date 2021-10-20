@@ -10,7 +10,10 @@ use Picqer\Financials\Exact\WebhookSubscription;
 
 class WebhookServiceProvider extends ServiceProvider
 {
-    public function register() {
+    /**
+     * @todo This ServiceProvider makes an Exact API call at every boot. Make this a scheduled running task instead.
+     */
+    public function boot() {
         // Don't try to register webhooks on calls to a webhook or to the authorization callback
         if(
             Str::contains(request()->url(), 'exact/webhook/') === false &&
