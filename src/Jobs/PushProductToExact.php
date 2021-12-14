@@ -3,6 +3,7 @@
 namespace Daalder\Exact\Jobs;
 
 use Daalder\Exact\Services\ConnectionFactory;
+use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Money\Money;
 use Picqer\Financials\Exact\SalesItemPrice;
 use Pionect\Daalder\Models\Price\Price;
@@ -22,6 +23,13 @@ class PushProductToExact implements ShouldQueue
     use Dispatchable, InteractsWithQueue, SerializesModels, Batchable;
 
     /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 5;
+
+    /**
      * @var Product $product;
      */
     protected $product;
@@ -29,6 +37,15 @@ class PushProductToExact implements ShouldQueue
     public function __construct(Product $product)
     {
         $this->product = $product->fresh();
+    }
+
+    public function middleware()
+    {
+        return [
+            // If the job fails two times in five minutes, wait five minutes before retrying
+            // If the job fails before the threshold has been reached, wait 0 to 5 minutes before retrying
+            (new ThrottlesExceptions(2, 5))->backoff(rand(0, 5))
+        ];
     }
 
     public function handle() {
