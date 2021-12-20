@@ -61,13 +61,12 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
         Address $deliveryAddress = null
     ) : SalesOrder {
         $salesOrder = new SalesOrder($connection);
-        $salesOrder->PaymentReference = $order->transaction_type;
         $salesOrder->OrderedBy        = $account->ID;
         $salesOrder->DeliverTo        = $account->ID;
         $salesOrder->InvoiceTo        = $account->ID;
         $salesOrder->DeliveryAddress  = $deliveryAddress->ID;
         $salesOrder->Remarks          = $order->comment;
-        $salesOrder->YourRef          = $order->transaction_id;
+        $salesOrder->YourRef          = $order->id;
         $salesOrder->Description      = '';//$this->getDescription($order);
 
         $salesOrderLines = [];
@@ -107,9 +106,10 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
             $salesOrderLines[] = [
                 'Item' => $productExactID,
                 'UnitCode' => 'pc',
-                'UnitPrice' => $orderrow->getPrice() / (1 + ($vatRate->percentage / 100)),
+                'UnitPrice' => $orderrow->getPrice(),
                 'Quantity' => $orderrow->amount,
                 'VATCode' => $vatRate->exact_code,
+                'VATCodeDescription' => $vatRate->name,
                 'Description' => $this->getOrderRowDescription($orderrow)
             ];
         }
