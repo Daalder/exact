@@ -2,6 +2,7 @@
 
 namespace Daalder\Exact;
 
+use Daalder\Exact\Commands\PullStock;
 use Daalder\Exact\Commands\PushProductToExact;
 use Daalder\Exact\ServiceProviders\EventServiceProvider;
 use Illuminate\Support\ServiceProvider;
@@ -36,6 +37,7 @@ class ExactServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 PushProductToExact::class,
+                PullStock::class,
             ]);
         }
     }
