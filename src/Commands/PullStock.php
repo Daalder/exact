@@ -39,11 +39,9 @@ class PullStock extends Command
 
         $batch = [];
 
-        $query->chunk(100, function($products) use (&$batch) {
-            foreach($products as $product) {
-                $batch[] = new \Daalder\Exact\Jobs\PullStock($product);
-            }
-        });
+        $query->each(function($product) use (&$batch) {
+            $batch[] = new \Daalder\Exact\Jobs\PullStock($product);
+        }, 100);
 
         Bus::batch($batch)
             ->name('Daalder Exact - Pull Stock')
