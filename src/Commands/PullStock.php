@@ -12,7 +12,7 @@ class PullStock extends Command
      *
      * @var string
      */
-    protected $signature = 'exact:pull-stock {sku?}';
+    protected $signature = 'exact:pull-stock {skus?*}';
 
     /**
      * The console command description.
@@ -28,13 +28,13 @@ class PullStock extends Command
      */
     public function handle()
     {
-        $sku = $this->argument('sku');
+        $skus = $this->argument('skus');
 
         /** @var Builder $query */
         $query = app(ProductRepository::class)->newQuery();
 
-        if($sku) {
-            $query->where('sku', $sku);
+        if($skus) {
+            $query->whereIn('sku', $skus);
         }
 
         $batch = [];
