@@ -54,12 +54,16 @@ class WebhookController extends Controller
             $stockPosition = $stockPosition[0];
             $daalderProduct = $this->productRepository->getProductFromExactId($stockPosition->ItemId);
 
-            $this->productRepository->storeStock($daalderProduct,[
-                'product_id' => $daalderProduct->id,
-                'in_stock' => $stockPosition->InStock ?? 0,
-                'planned_in' => $stockPosition->PlanningIn ?? 0,
-                'planned_out' => $stockPosition->PlanningOut ?? 0
-            ]);
+            if($daalderProduct) {
+                $this->productRepository->storeStock($daalderProduct,[
+                    'product_id' => $daalderProduct->id,
+                    'in_stock' => $stockPosition->InStock ?? 0,
+                    'planned_in' => $stockPosition->PlanningIn ?? 0,
+                    'planned_out' => $stockPosition->PlanningOut ?? 0
+                ]);
+            } else {
+                return response('', 422);
+            }
         }
 
         return response('', 200);

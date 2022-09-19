@@ -7,4 +7,5 @@ return [
     'division' => env('EXACT_DIVISION'),
     'base_url' => env('EXACT_BASE_URL', 'https://start.exactonline.nl'),
     'webhook_secret' => env('EXACT_WEBHOOK_SECRET'),
+    'app_name' => env('EXACT_APP_NAME'),
 ];
