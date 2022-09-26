@@ -17,13 +17,6 @@ class RegisterWebhooks
             /** @var Connection $client */
             $connection = ConnectionFactory::getConnection();
 
-            // If the connection is not authenticated, don't attempt to register webhooks. Otherwise, this would
-            // break the entire application (including the authenticate-exact endpoint), since this method is
-            // called for every request the user makes.
-            if(!$connection || $connection->needsAuthentication()) {
-                return;
-            }
-
             $webhook = new WebhookSubscription($connection);
 
             $stockSubscription = collect($webhook->get())
