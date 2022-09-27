@@ -18,7 +18,7 @@
         }
     ],
     "require": {
-        "picqer/exact-php-client": "^3.31"
+        "picqer/exact-php-client": "^v3.43.0"
     },
     "require-dev": {
         "orchestra/testbench": "^5.0|^6.0",
