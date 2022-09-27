@@ -24,18 +24,14 @@ class RegisterWebhooks
                 ->where('Description', config('daalder-exact.app_name'))
                 ->first();
 
-            if(is_null($stockSubscription) || $stockSubscription->CallbackURL !== config('app.url').'/exact/webhook/stockposition') {
+            if (is_null($stockSubscription)) {
                 $webhook = new WebhookSubscription($connection);
                 $webhook->Topic = 'StockPositions';
-
-
-                if(is_null($stockSubscription)) {
-                    $webhook->CallbackURL = config('app.url').'/exact/webhook/stockposition';
-                    $webhook->save();
-                } else {
-                    $stockSubscription->CallbackURL = config('app.url').'/exact/webhook/stockposition';
-                    $stockSubscription->update();
-                }
+                $webhook->CallbackURL = config('app.url') . '/exact/webhook/stockposition';
+                $webhook->save();
+            } elseif ($stockSubscription->CallbackURL !== config('app.url') . '/exact/webhook/stockposition') {
+                $stockSubscription->CallbackURL = config('app.url') . '/exact/webhook/stockposition';
+                $stockSubscription->update();
             }
         } catch (\Exception $e) {
             throw new \Exception('Exception while connecting to Exact: '. $e->getMessage());
