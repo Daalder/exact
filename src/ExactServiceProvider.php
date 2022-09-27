@@ -5,6 +5,7 @@ namespace Daalder\Exact;
 use Daalder\Exact\Commands\PullStock;
 use Daalder\Exact\Commands\PushProductToExact;
 use Daalder\Exact\ServiceProviders\EventServiceProvider;
+use Daalder\Exact\Services\ConnectionFactory;
 use Illuminate\Support\ServiceProvider;
 use Daalder\Exact\ServiceProviders\ObservationServiceProvider;
 
@@ -53,7 +54,9 @@ class ExactServiceProvider extends ServiceProvider
             __DIR__.'/../config/daalder-exact.php', 'daalder-exact'
         );
 
-        $this->app->register(ObservationServiceProvider::class);
-        $this->app->register(EventServiceProvider::class);
+        if(ConnectionFactory::exactConfigKeysValid()) {
+            $this->app->register(ObservationServiceProvider::class);
+            $this->app->register(EventServiceProvider::class);
+        }
     }
 }

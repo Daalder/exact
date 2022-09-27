@@ -24,11 +24,6 @@ class ConnectionFactory
         // Create Connection instance and setup some config keys
         $connection = new Connection();
 
-        // If the config keys haven't been set, return the fresh (non-functional) $connection
-        if(self::exactConfigKeysValid() === false) {
-            return $connection;
-        }
-
         // Load config keys into $connection
         self::loadExactConfigIntoConnection($connection);
 
@@ -69,7 +64,7 @@ class ConnectionFactory
         return $connection;
     }
 
-    private static function exactConfigKeysValid() {
+    public static function exactConfigKeysValid() {
         return
             !is_null(config('daalder-exact.callback_url')) &&
             !is_null(config('daalder-exact.client_id')) &&
