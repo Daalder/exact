@@ -61,8 +61,6 @@ class WebhookController extends Controller
                     'planned_in' => $stockPosition->PlanningIn ?? 0,
                     'planned_out' => $stockPosition->PlanningOut ?? 0
                 ]);
-            } else {
-                return response('', 422);
             }
         }
 
