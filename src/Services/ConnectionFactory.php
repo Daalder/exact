@@ -76,6 +76,7 @@ class ConnectionFactory
         $connection->setRedirectUrl(config('daalder-exact.callback_url'));
         $connection->setExactClientId(config('daalder-exact.client_id'));
         $connection->setExactClientSecret(config('daalder-exact.client_secret'));
+        $connection->setDivision(config('daalder-exact.division'));
         $connection->setBaseUrl(config('daalder-exact.base_url'));
     }
 
