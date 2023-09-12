@@ -2,6 +2,7 @@
 
 namespace Daalder\Exact\Jobs;
 
+use App\Models\ProductAttribute\Set;
 use Daalder\Exact\Services\ConnectionFactory;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Picqer\Financials\Exact\StockPosition;
@@ -13,6 +14,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Picqer\Financials\Exact\Item;
 use Pionect\Daalder\Models\Product\Product;
+use App\Models\Warehouse\Warehouse;
 
 class PullStock implements ShouldQueue
 {
@@ -26,12 +28,12 @@ class PullStock implements ShouldQueue
     public $tries = 5;
 
     /**
-     * @var Product $product;
+     * @var Product $product ;
      */
     protected $product;
 
     /**
-     * @var ProductRepository $productRepository;
+     * @var ProductRepository $productRepository ;
      */
     protected $productRepository;
 
@@ -50,22 +52,23 @@ class PullStock implements ShouldQueue
         ];
     }
 
-    public function handle() {
+    public function handle()
+    {
         // Resolve Picqer Connection
         $connection = ConnectionFactory::getConnection();
 
         // Filter Exact items based on Daalder product sku
         $code = $this->product->sku;
         $item = new Item($connection);
-        $item = $item->filter("Code eq '".$code."'");
+        $item = $item->filter("Code eq '" . $code . "'");
 
         // Get the Exact Item or return
-        if(count($item) > 0) {
+        if (count($item) > 0) {
             /** @var Item $item */
             $item = $item[0];
         } else {
             $this->fail(
-                'Exact Item not found for Daalder Product with id '. $this->product->id .
+                'Exact Item not found for Daalder Product with id ' . $this->product->id .
                 ' and sku ' . $this->product->sku
             );
         }
@@ -74,21 +77,85 @@ class PullStock implements ShouldQueue
         $stockPosition = $stockPosition->filter([], '', '', ['itemId' => "guid'{$item->ID}'"]);
 
         // Get the Exact Item or return
-        if(count($stockPosition) > 0) {
+        if (count($stockPosition) > 0) {
             /** @var StockPosition $stockPosition */
             $stockPosition = $stockPosition[0];
         } else {
             $this->fail(
-                'Exact StockPosition not found for Daalder Product with id '. $this->product->id .
-                ' and sku ' . $this->product->sku .' / Exact Item with ID '. $item->ID
+                'Exact StockPosition not found for Daalder Product with id ' . $this->product->id .
+                ' and sku ' . $this->product->sku . ' / Exact Item with ID ' . $item->ID
             );
         }
 
-        $this->productRepository->storeStock($this->product, [
-            'product_id' => $this->product->id,
-            'in_stock' => $stockPosition->InStock ?? 0,
-            'planned_in' => $stockPosition->PlanningIn ?? 0,
-            'planned_out' => $stockPosition->PlanningOut ?? 0
-        ]);
+        $this->storeStock($stockPosition);
     }
+
+    /**
+     * @param $stockPosition
+     * @return void
+     */
+    private function storeStock($stockPosition): void
+    {
+        $channableWarehouse = Warehouse::firstOrCreate(['code' => 'channable'], ['name' => 'Channable']);
+        $defaultWarehouse = Warehouse::defaultWarehouse();
+
+        $ticketAttributeSetId = Set::tickets()->id;
+        $isTicket = $this->product->productattributeset_id == $ticketAttributeSetId;
+
+        $stock = $stockPosition->InStock ?? 0;
+        $plannedIn = $stockPosition->PlanningIn ?? 0;
+        $plannedOut = $stockPosition->PlanningOut ?? 0;
+
+        $warehouses = [$channableWarehouse, $defaultWarehouse];
+        $stockParams = ['warehouses' => []];
+
+        foreach ($warehouses as $warehouse) {
+            $isChannableWarehouse = $warehouse->code === 'channable';
+
+            if ($isTicket && $isChannableWarehouse) {
+                continue;
+            }
+
+            $inStock = $isTicket
+                ? $stock
+                : $this->calculateInStock($stock, $isChannableWarehouse);
+
+            $stockParams['warehouses'][] = $this->storeProductStock($warehouse->id, $inStock, $plannedIn, $plannedOut);
+        }
+
+        if (count($stockParams['warehouses']) > 0) {
+            $this->productRepository->storeStock($this->product, $stockParams);
+        }
+    }
+
+    /**
+     * @param int $stock
+     * @param bool $isChannableWarehouse
+     * @return int
+     */
+    private function calculateInStock(int $stock, bool $isChannableWarehouse): int
+    {
+        $channableStock = floor($stock * 0.25);
+
+        return $isChannableWarehouse ? $channableStock : $stock - $channableStock;
+    }
+
+    /**
+     * @param int $warehouseId
+     * @param int $inStock
+     * @param int $plannedIn
+     * @param int $plannedOut
+     * @return array
+     */
+    private function storeProductStock(int $warehouseId, int $inStock, int $plannedIn, int $plannedOut): array
+    {
+        return [
+            'product_id' => $this->product->id,
+            'id' => $warehouseId,
+            'in_stock' => $inStock,
+            'planned_in' => $plannedIn,
+            'planned_out' => $plannedOut
+        ];
+    }
+
 }
