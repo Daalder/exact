@@ -2,8 +2,6 @@
 
 namespace Daalder\Exact\ServiceProviders;
 
-use App\Events\Order\ChannableOrderCreated;
-use Daalder\Exact\Listeners\ChannableOrderCreatedListener;
 use Daalder\Exact\Listeners\DailyEventListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Daalder\Exact\Listeners\PaymentConfirmedListener;
@@ -23,9 +21,6 @@ class EventServiceProvider extends ServiceProvider
         ],
         DailyEvent::class => [
             DailyEventListener::class
-        ],
-        ChannableOrderCreated::class => [
-            ChannableOrderCreatedListener::class,
         ]
     ];
 }
