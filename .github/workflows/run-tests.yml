@@ -21,8 +21,8 @@ jobs:
         name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.dependency-version }}
         steps:
             - id: foo
-              uses: Daalder/run-tests-action@1.2.4
+              uses: Daalder/run-tests-action@1.3.0
               env:
-                  GITHUB_TOKEN: ${{ github.token }}
+                  TOKEN_GITHUB: ${{ github.token }}
                   PACKAGIST_TOKEN: ${{ secrets.DAALDER }}
                   SLACK_BEARER_TOKEN: ${{ secrets.SLACK_BEARER_TOKEN }}
