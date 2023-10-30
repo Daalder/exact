@@ -15,3 +15,4 @@ Route::group(['prefix' => 'exact'], function () {
 Route::group(['middleware' => ['api_client']], function () {
     Route::get('authenticate-exact', AuthController::class.'@authenticateExact');
 });
+
