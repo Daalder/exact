@@ -31,12 +31,12 @@ class PullStock implements ShouldQueue
     public $tries = 5;
 
     /**
-     * @var Product $product;
+     * @var Product $product ;
      */
     protected $product;
 
     /**
-     * @var ProductRepository $productRepository;
+     * @var ProductRepository $productRepository ;
      */
     protected $productRepository;
 
@@ -55,34 +55,35 @@ class PullStock implements ShouldQueue
         ];
     }
 
-    public function handle() {
+    public function handle()
+    {
         // Resolve Picqer Connection
         $connection = ConnectionFactory::getConnection();
 
         // Filter Exact items based on Daalder product sku
         $code = $this->product->sku;
         $item = new Item($connection);
-        $item = $item->filter("Code eq '".$code."'");
+        $item = $item->filter("Code eq '" . $code . "'");
 
         // Get the Exact Item or return
-        if(count($item) > 0) {
+        if (count($item) > 0) {
             /** @var Item $item */
             $item = $item[0];
         } else {
             $this->fail(
-                'Exact Item not found for Daalder Product with id '. $this->product->id .
+                'Exact Item not found for Daalder Product with id ' . $this->product->id .
                 ' and sku ' . $this->product->sku
             );
         }
 
         $itemWarehouse = new ItemWarehouse($connection);
         $select = "CurrentStock, PlannedStockIn, PlannedStockOut, WarehouseCode";
-        $itemWarehouse = $itemWarehouse->filter("Item eq guid'".$item->ID."'", '', $select);
+        $itemWarehouse = $itemWarehouse->filter("Item eq guid'" . $item->ID . "'", '', $select);
         $stock = [];
 
 
         // Get the Exact Item or return
-        if(count($itemWarehouse) > 0) {
+        if (count($itemWarehouse) > 0) {
             /** @var ItemWarehouse $itemWarehouse */
 
             $stockCollection = collect($itemWarehouse);
@@ -90,7 +91,7 @@ class PullStock implements ShouldQueue
             event($exactProductStock);
             $stock = $exactProductStock->getStock();
 
-            $stock = $stock->reduce(function($carry, $warehouseStock) {
+            $stock = $stock->reduce(function ($carry, $warehouseStock) {
                 $carry['InStock'] += $warehouseStock->CurrentStock;
                 $carry['PlanningIn'] += $warehouseStock->PlannedStockIn;
                 $carry['PlanningOut'] += $warehouseStock->PlannedStockOut;
@@ -98,13 +99,13 @@ class PullStock implements ShouldQueue
             }, ['InStock' => 0, 'PlanningIn' => 0, 'PlanningOut' => 0]);
         } else {
             $this->fail(
-                'Exact StockPosition not found for Daalder Product with id '. $this->product->id .
-                ' and sku ' . $this->product->sku .' / Exact Item with ID '. $item->ID
+                'Exact StockPosition not found for Daalder Product with id ' . $this->product->id .
+                ' and sku ' . $this->product->sku . ' / Exact Item with ID ' . $item->ID
             );
         }
 
         $stockParams = [
-            'in_stock' => Arr::get($stock, 'InStock', 0) ,
+            'in_stock' => Arr::get($stock, 'InStock', 0),
             'planned_in' => Arr::get($stock, 'PlanningIn', 0),
             'planned_out' => Arr::get($stock, 'PlanningOut', 0)
         ];
