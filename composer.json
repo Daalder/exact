@@ -23,7 +23,7 @@
     "require-dev": {
         "orchestra/testbench": "^7.0",
         "phpunit/phpunit": "^9.3",
-        "pionect/daalder": "^21|dev-acceptance"
+        "pionect/daalder": "^21|^20|dev-acceptance"
     },
     "autoload": {
         "classmap": ["database"],

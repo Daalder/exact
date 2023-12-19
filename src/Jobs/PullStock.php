@@ -2,8 +2,13 @@
 
 namespace Daalder\Exact\Jobs;
 
+use Daalder\Exact\Events\BeforeProductStockSaved;
+use Daalder\Exact\Events\ExactProductStockPulled;
 use Daalder\Exact\Services\ConnectionFactory;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
+use Illuminate\Support\Arr;
+use Picqer\Financials\Exact\InventoryItemWarehouse;
+use Picqer\Financials\Exact\ItemWarehouse;
 use Picqer\Financials\Exact\StockPosition;
 use Pionect\Daalder\Models\Product\Repositories\ProductRepository;
 use Illuminate\Bus\Batchable;
@@ -70,13 +75,27 @@ class PullStock implements ShouldQueue
             );
         }
 
-        $stockPosition = new StockPosition($connection);
-        $stockPosition = $stockPosition->filter([], '', '', ['itemId' => "guid'{$item->ID}'"]);
+        $itemWarehouse = new ItemWarehouse($connection);
+        $select = "CurrentStock, PlannedStockIn, PlannedStockOut, WarehouseCode";
+        $itemWarehouse = $itemWarehouse->filter("Item eq guid'".$item->ID."'", '', $select);
+        $stock = [];
+
 
         // Get the Exact Item or return
-        if(count($stockPosition) > 0) {
-            /** @var StockPosition $stockPosition */
-            $stockPosition = $stockPosition[0];
+        if(count($itemWarehouse) > 0) {
+            /** @var ItemWarehouse $itemWarehouse */
+
+            $stockCollection = collect($itemWarehouse);
+            $exactProductStock = new ExactProductStockPulled($this->product, $stockCollection);
+            event($exactProductStock);
+            $stock = $exactProductStock->getStock();
+
+            $stock = $stock->reduce(function($carry, $warehouseStock) {
+                $carry['InStock'] += $warehouseStock->CurrentStock;
+                $carry['PlanningIn'] += $warehouseStock->PlannedStockIn;
+                $carry['PlanningOut'] += $warehouseStock->PlannedStockOut;
+                return $carry;
+            }, ['InStock' => 0, 'PlanningIn' => 0, 'PlanningOut' => 0]);
         } else {
             $this->fail(
                 'Exact StockPosition not found for Daalder Product with id '. $this->product->id .
@@ -84,11 +103,16 @@ class PullStock implements ShouldQueue
             );
         }
 
-        $this->productRepository->storeStock($this->product, [
-            'product_id' => $this->product->id,
-            'in_stock' => $stockPosition->InStock ?? 0,
-            'planned_in' => $stockPosition->PlanningIn ?? 0,
-            'planned_out' => $stockPosition->PlanningOut ?? 0
-        ]);
+        $stockParams = [
+            'in_stock' => Arr::get($stock, 'InStock', 0) ,
+            'planned_in' => Arr::get($stock, 'PlanningIn', 0),
+            'planned_out' => Arr::get($stock, 'PlanningOut', 0)
+        ];
+
+        $beforeProductStockSaved = new BeforeProductStockSaved($this->product, $stockParams);
+        event($beforeProductStockSaved);
+        $stockParams = $beforeProductStockSaved->getStock();
+
+        $this->productRepository->storeStock($this->product, $stockParams);
     }
 }
