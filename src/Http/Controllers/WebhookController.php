@@ -3,8 +3,10 @@
 namespace Daalder\Exact\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Daalder\Exact\Jobs\PullStock;
 use Daalder\Exact\Repositories\ProductRepository;
 use Daalder\Exact\Services\ConnectionFactory;
+use Exception;
 use Illuminate\Http\Request;
 use Picqer\Financials\Exact\Connection;
 use Picqer\Financials\Exact\StockPosition;
@@ -29,6 +31,9 @@ class WebhookController extends Controller
         );
     }
 
+    /**
+     * @throws Exception
+     */
     public function stockPosition(Request $request)
     {
         // If not authenticated
@@ -40,28 +45,10 @@ class WebhookController extends Controller
         }
 
         $stockPositionID = $request->all()['Content']['Key'];
+        $daalderProduct = $this->productRepository->getProductFromExactId($stockPositionID);
 
-        /** @var Connection $connection */
-        $connection = ConnectionFactory::getConnection();
-        if($connection->needsAuthentication()) {
-            throw new \Exception("Connection to Exact is not authenticated! Call the 'authenticate-exact' endpoint to fix this.");
-        }
-
-        $stockPosition = new StockPosition($connection);
-        $stockPosition = $stockPosition->filter([], '', '', ['itemId' => "guid'{$stockPositionID}'"]);
-
-        if(count($stockPosition) > 0) {
-            $stockPosition = $stockPosition[0];
-            $daalderProduct = $this->productRepository->getProductFromExactId($stockPosition->ItemId);
-
-            if($daalderProduct) {
-                $this->productRepository->storeStock($daalderProduct,[
-                    'product_id' => $daalderProduct->id,
-                    'in_stock' => $stockPosition->InStock ?? 0,
-                    'planned_in' => $stockPosition->PlanningIn ?? 0,
-                    'planned_out' => $stockPosition->PlanningOut ?? 0
-                ]);
-            }
+        if($daalderProduct) {
+            PullStock::dispatch($daalderProduct, $stockPositionID);
         }
 
         return response('', 200);

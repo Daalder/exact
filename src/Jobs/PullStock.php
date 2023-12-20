@@ -41,10 +41,16 @@ class PullStock implements ShouldQueue
      */
     protected $productRepository;
 
-    public function __construct(Product $product)
+    /**
+     * @var string|mixed|null
+     */
+    protected string|null $exactItemId;
+
+    public function __construct(Product $product, $exactItemId = null)
     {
         $this->product = $product;
         $this->productRepository = app(ProductRepository::class);
+        $this->exactItemId = $exactItemId;
     }
 
     public function middleware()
@@ -56,29 +62,32 @@ class PullStock implements ShouldQueue
         ];
     }
 
-    public function handle()
+    public function handle(): void
     {
         // Resolve Picqer Connection
         $connection = ConnectionFactory::getConnection();
 
-        // Filter Exact items based on Daalder product sku
-        $code = $this->product->sku;
-        $item = new Item($connection);
-        $item = $item->filter("Code eq '" . $code . "'");
+        if(!$this->exactItemId) {
+            // Filter Exact items based on Daalder product sku
+            $code = $this->product->sku;
+            $item = new Item($connection);
+            $item = $item->filter("Code eq '" . $code . "'");
 
-        // Get the Exact Item or return
-        if (count($item) > 0) {
-            /** @var Item $item */
-            $item = $item[0];
-        } else {
-            $this->fail(
-                'Exact Item not found for Daalder Product with id ' . $this->product->id .
-                ' and sku ' . $this->product->sku
-            );
+            // Get the Exact Item or return
+            if (count($item) > 0) {
+                /** @var Item $item */
+                $item = $item[0];
+                $this->exactItemId = $item->ID;
+            } else {
+                $this->fail(
+                    'Exact Item not found for Daalder Product with id ' . $this->product->id .
+                    ' and sku ' . $this->product->sku
+                );
+            }
         }
 
         $itemWarehouse = new ItemWarehouse($connection);
-        $itemWarehouse = $itemWarehouse->filter("Item eq guid'" . $item->ID . "'", '', "CurrentStock, PlannedStockIn, PlannedStockOut, WarehouseCode");
+        $itemWarehouse = $itemWarehouse->filter("Item eq guid'" . $this->exactItemId . "'", '', "CurrentStock, PlannedStockIn, PlannedStockOut, WarehouseCode");
         $stock = [];
 
         // Get the Exact Item or return
@@ -98,7 +107,7 @@ class PullStock implements ShouldQueue
         } else {
             $this->fail(
                 'Exact StockPosition not found for Daalder Product with id ' . $this->product->id .
-                ' and sku ' . $this->product->sku . ' / Exact Item with ID ' . $item->ID
+                ' and sku ' . $this->product->sku . ' / Exact Item with ID ' . $this->exactItemId
             );
         }
 
