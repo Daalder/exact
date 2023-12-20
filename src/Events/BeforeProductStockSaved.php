@@ -34,7 +34,7 @@ class BeforeProductStockSaved
     /**
      * @return array
      */
-    public function getStock(): array
+    public function getStockParams(): array
     {
         return $this->stockParams;
     }
@@ -43,7 +43,7 @@ class BeforeProductStockSaved
      * @param array $stockParams
      * @return void
      */
-    public function setStock(array $stockParams): void
+    public function setStockParams(array $stockParams): void
     {
         $this->stockParams = $stockParams;
     }

@@ -7,6 +7,7 @@ use Daalder\Exact\Events\ExactProductStockPulled;
 use Daalder\Exact\Services\ConnectionFactory;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Picqer\Financials\Exact\InventoryItemWarehouse;
 use Picqer\Financials\Exact\ItemWarehouse;
 use Picqer\Financials\Exact\StockPosition;
@@ -77,19 +78,16 @@ class PullStock implements ShouldQueue
         }
 
         $itemWarehouse = new ItemWarehouse($connection);
-        $select = "CurrentStock, PlannedStockIn, PlannedStockOut, WarehouseCode";
-        $itemWarehouse = $itemWarehouse->filter("Item eq guid'" . $item->ID . "'", '', $select);
+        $itemWarehouse = $itemWarehouse->filter("Item eq guid'" . $item->ID . "'", '', "CurrentStock, PlannedStockIn, PlannedStockOut, WarehouseCode");
         $stock = [];
-
 
         // Get the Exact Item or return
         if (count($itemWarehouse) > 0) {
             /** @var ItemWarehouse $itemWarehouse */
-
-            $stockCollection = collect($itemWarehouse);
+            $stockCollection = Collection::wrap($itemWarehouse);
             $exactProductStock = new ExactProductStockPulled($this->product, $stockCollection);
             event($exactProductStock);
-            $stock = $exactProductStock->getStock();
+            $stock = $exactProductStock->getStockData();
 
             $stock = $stock->reduce(function ($carry, $warehouseStock) {
                 $carry['InStock'] += $warehouseStock->CurrentStock;
@@ -112,7 +110,7 @@ class PullStock implements ShouldQueue
 
         $beforeProductStockSaved = new BeforeProductStockSaved($this->product, $stockParams);
         event($beforeProductStockSaved);
-        $stockParams = $beforeProductStockSaved->getStock();
+        $stockParams = $beforeProductStockSaved->getStockParams();
 
         $this->productRepository->storeStock($this->product, $stockParams);
     }
