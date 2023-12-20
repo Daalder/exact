@@ -14,14 +14,14 @@ class ExactProductStockPulled
     protected Product $product;
 
     /**
-     * @var Collection $stockData
+     * @var Collection $exactItemWarehousesData
      */
-    protected Collection $stockData;
+    protected Collection $exactItemWarehousesData;
 
-    public function __construct(Product $product, Collection $stockData)
+    public function __construct(Product $product, Collection $exactItemWarehousesData)
     {
         $this->product = $product;
-        $this->stockData = $stockData;
+        $this->exactItemWarehousesData = $exactItemWarehousesData;
     }
 
     /**
@@ -35,17 +35,17 @@ class ExactProductStockPulled
     /**
     * @return Collection
      */
-    public function getStockData(): Collection
+    public function getExactItemWarehousesData(): Collection
     {
-        return $this->stockData;
+        return $this->exactItemWarehousesData;
     }
 
     /**
-     * @param Collection $stockData
+     * @param Collection $exactItemWarehousesData
      * @return void
      */
-    public function setStockData(Collection $stockData): void
+    public function setExactItemWarehousesData(Collection $exactItemWarehousesData): void
     {
-        $this->stockData = $stockData;
+        $this->exactItemWarehousesData = $exactItemWarehousesData;
     }
 }

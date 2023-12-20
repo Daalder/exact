@@ -96,7 +96,7 @@ class PullStock implements ShouldQueue
             $stockCollection = Collection::wrap($itemWarehouse);
             $exactProductStock = new ExactProductStockPulled($this->product, $stockCollection);
             event($exactProductStock);
-            $stock = $exactProductStock->getStockData();
+            $stock = $exactProductStock->getExactItemWarehousesData();
 
             $stock = $stock->reduce(function ($carry, $warehouseStock) {
                 $carry['InStock'] += $warehouseStock->CurrentStock;
