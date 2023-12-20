@@ -2,8 +2,14 @@
 
 namespace Daalder\Exact\Jobs;
 
+use Daalder\Exact\Events\BeforeProductStockSaved;
+use Daalder\Exact\Events\ExactProductStockPulled;
 use Daalder\Exact\Services\ConnectionFactory;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Picqer\Financials\Exact\InventoryItemWarehouse;
+use Picqer\Financials\Exact\ItemWarehouse;
 use Picqer\Financials\Exact\StockPosition;
 use Pionect\Daalder\Models\Product\Repositories\ProductRepository;
 use Illuminate\Bus\Batchable;
@@ -26,19 +32,25 @@ class PullStock implements ShouldQueue
     public $tries = 5;
 
     /**
-     * @var Product $product;
+     * @var Product $product ;
      */
     protected $product;
 
     /**
-     * @var ProductRepository $productRepository;
+     * @var ProductRepository $productRepository ;
      */
     protected $productRepository;
 
-    public function __construct(Product $product)
+    /**
+     * @var string|mixed|null
+     */
+    protected string|null $exactItemId;
+
+    public function __construct(Product $product, $exactItemId = null)
     {
         $this->product = $product;
         $this->productRepository = app(ProductRepository::class);
+        $this->exactItemId = $exactItemId;
     }
 
     public function middleware()
@@ -50,45 +62,65 @@ class PullStock implements ShouldQueue
         ];
     }
 
-    public function handle() {
+    public function handle(): void
+    {
         // Resolve Picqer Connection
         $connection = ConnectionFactory::getConnection();
 
-        // Filter Exact items based on Daalder product sku
-        $code = $this->product->sku;
-        $item = new Item($connection);
-        $item = $item->filter("Code eq '".$code."'");
+        if(!$this->exactItemId) {
+            // Filter Exact items based on Daalder product sku
+            $code = $this->product->sku;
+            $item = new Item($connection);
+            $item = $item->filter("Code eq '" . $code . "'");
+
+            // Get the Exact Item or return
+            if (count($item) > 0) {
+                /** @var Item $item */
+                $item = $item[0];
+                $this->exactItemId = $item->ID;
+            } else {
+                $this->fail(
+                    'Exact Item not found for Daalder Product with id ' . $this->product->id .
+                    ' and sku ' . $this->product->sku
+                );
+            }
+        }
+
+        $itemWarehouse = new ItemWarehouse($connection);
+        $itemWarehouse = $itemWarehouse->filter("Item eq guid'" . $this->exactItemId . "'", '', "CurrentStock, PlannedStockIn, PlannedStockOut, WarehouseCode");
+        $stock = [];
 
         // Get the Exact Item or return
-        if(count($item) > 0) {
-            /** @var Item $item */
-            $item = $item[0];
+        if (count($itemWarehouse) > 0) {
+            /** @var ItemWarehouse $itemWarehouse */
+            $stockCollection = Collection::wrap($itemWarehouse);
+            $exactProductStock = new ExactProductStockPulled($this->product, $stockCollection);
+            event($exactProductStock);
+            $stock = $exactProductStock->getExactItemWarehousesData();
+
+            $stock = $stock->reduce(function ($carry, $warehouseStock) {
+                $carry['InStock'] += $warehouseStock->CurrentStock;
+                $carry['PlanningIn'] += $warehouseStock->PlannedStockIn;
+                $carry['PlanningOut'] += $warehouseStock->PlannedStockOut;
+                return $carry;
+            }, ['InStock' => 0, 'PlanningIn' => 0, 'PlanningOut' => 0]);
         } else {
             $this->fail(
-                'Exact Item not found for Daalder Product with id '. $this->product->id .
-                ' and sku ' . $this->product->sku
+                'Exact StockPosition not found for Daalder Product with id ' . $this->product->id .
+                ' and sku ' . $this->product->sku . ' / Exact Item with ID ' . $this->exactItemId
             );
         }
 
-        $stockPosition = new StockPosition($connection);
-        $stockPosition = $stockPosition->filter([], '', '', ['itemId' => "guid'{$item->ID}'"]);
+        $stockParams = [
+            'in_stock' => Arr::get($stock, 'InStock', 0),
+            'planned_in' => Arr::get($stock, 'PlanningIn', 0),
+            'planned_out' => Arr::get($stock, 'PlanningOut', 0)
+        ];
 
-        // Get the Exact Item or return
-        if(count($stockPosition) > 0) {
-            /** @var StockPosition $stockPosition */
-            $stockPosition = $stockPosition[0];
-        } else {
-            $this->fail(
-                'Exact StockPosition not found for Daalder Product with id '. $this->product->id .
-                ' and sku ' . $this->product->sku .' / Exact Item with ID '. $item->ID
-            );
-        }
+        $beforeProductStockSaved = new BeforeProductStockSaved($this->product, $stockParams);
+        event($beforeProductStockSaved);
+        $stockParams = $beforeProductStockSaved->getStockParams();
 
-        $this->productRepository->storeStock($this->product, [
-            'product_id' => $this->product->id,
-            'in_stock' => $stockPosition->InStock ?? 0,
-            'planned_in' => $stockPosition->PlanningIn ?? 0,
-            'planned_out' => $stockPosition->PlanningOut ?? 0
-        ]);
+        $this->productRepository->storeStock($this->product, $stockParams);
     }
 }
