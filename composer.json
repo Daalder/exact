@@ -21,9 +21,9 @@
         "picqer/exact-php-client": "^v3.43.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^5.0|^6.0",
+        "orchestra/testbench": "^7.0",
         "phpunit/phpunit": "^9.3",
-        "pionect/daalder": "^21|dev-acceptance"
+        "pionect/daalder": "^21|^20|dev-acceptance"
     },
     "autoload": {
         "classmap": ["database"],
