@@ -39,8 +39,8 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
         $this->vatRateRepository = $vatRateRepository;
     }
 
-    // TODO: change return type to int|null on PHP 8
-    public function getExactIdFromOrder(Order $order) {
+    public function getExactIdFromOrder(Order $order): string|null
+    {
         return $order->exact_id;
     }
 
@@ -155,8 +155,6 @@ class OrderRepository extends \Pionect\Daalder\Models\Order\Repositories\OrderRe
         $address->City = $order->city ?? $order->customer->invoice_city;
         $address->Postcode = $order->postalcode ?? $order->customer->invoice_postalcode;
         $address->Phone = $order->mobile ?? $order->phone ?? $order->customer->mobile ?? $order->customer->telephone;
-        $address->AddressLine2 = $order->email ?? $order->customer->email;
-        $address->AddressLine3 = $order->mobile ?? $order->phone ?? $order->customer->mobile ?? $order->customer->telephone;
         $address->Country = $order->country_code ?? $order->customer->invoice_country_code ?? 'NL';
         $address->Type = 4;
         $address->save();

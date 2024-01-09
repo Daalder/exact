@@ -9,13 +9,15 @@ use Pionect\Daalder\Models\Order\Order;
 
 class CustomerRepository extends \Pionect\Daalder\Models\Customer\Repositories\CustomerRepository
 {
-    // TODO: change return type to int|null on PHP 8
-    public function getExactIdFromCustomer(Customer $customer) {
+
+    public function getExactIdFromCustomer(Customer $customer): string|null
+    {
         return $customer->exact_id;
     }
 
-    public function setExactIdIfNotExists(Customer $customer, string $exactId) : void {
-        if(is_null($this->getExactIdFromCustomer($customer))) {
+    public function setExactIdIfNotExists(Customer $customer, string $exactId): void
+    {
+        if (is_null($this->getExactIdFromCustomer($customer))) {
             $customer->exact_id = $exactId;
 
             Customer::withoutSyncingToSearch(function () use ($customer) {
@@ -30,7 +32,7 @@ class CustomerRepository extends \Pionect\Daalder\Models\Customer\Repositories\C
      * @return Account
      * @description Updates or creates an Exact customer based on customer values of an order
      */
-    public function updateOrCreateExactCustomerFromOrder(Connection $connection, Order $order) : Account
+    public function updateOrCreateExactCustomerFromOrder(Connection $connection, Order $order): Account
     {
         $account = new Account($connection);
 
@@ -41,13 +43,13 @@ class CustomerRepository extends \Pionect\Daalder\Models\Customer\Repositories\C
             $account->ID = $exactId;
         }
 
-        if($order->contact_firstname) {
+        if ($order->contact_firstname) {
             $name = $order->contact_firstname . ' ' . $order->contact_lastname;
         } else {
             $name = $order->customer->firstname . ' ' . $order->customer->firstname;
         }
 
-        if($order->invoice_address && $order->invoice_housenumber) {
+        if ($order->invoice_address && $order->invoice_housenumber) {
             $addressLine = $order->invoice_address . ' ' . $order->invoice_housenumber;
         } else {
             $addressLine = $order->customer->invoice_address . ' ' . $order->customer->invoice_housenumber;
@@ -65,11 +67,13 @@ class CustomerRepository extends \Pionect\Daalder\Models\Customer\Repositories\C
 //        $account->SalesVATCode = $this->getVATCode($order);
 
         $account->save();
+        $this->setExactIdIfNotExists($order->customer, $account->ID);
 
         return $account;
     }
 
-    public function getVATCode(Order $order) {
+    public function getVATCode(Order $order)
+    {
 //        $order->vatnumber
     }
 }
